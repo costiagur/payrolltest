@@ -7,6 +7,7 @@ from datetime import datetime
 from datetime import timedelta
 from io import BytesIO
 from os import unlink
+import concurrent.futures
 from semel1616 import semel1616
 from semel90148 import semel90148
 from semel91025 import semel91025
@@ -50,19 +51,39 @@ def myfunc(queryobj):
 
         common.infoobj = common.infopopup() #common.root
 
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+       
+        t_semel91025 = pool.submit(semel91025,df,xlwriter,refmonth,prevmonth)
+        t_semeltax = pool.submit(semeltax,df,xlwriter,refmonth,prevmonth)
+        t_grosscur = pool.submit(grosscur,df,xlwriter,refmonth,prevmonth)
+        t_grossretro = pool.submit(grossretro,df,xlwriter,refmonth,prevmonth)
+        t_fundsdeduct = pool.submit(fundsdeduct,df,xlwriter,refmonth,prevmonth)
+
+        
         common.infoobj.show("עובדים עם נסיעות ללא שכר -{}".format(semel1616(df,xlwriter,refmonth,prevmonth)))
+
         common.infoobj.show("מספר עובדים עם חלקיות מעל 100% -{}".format(semel90148(df,xlwriter,refmonth,prevmonth)))
-        common.infoobj.show("מספר עובדים עם בסיס פנסיה לא סביר ביחס לערך שעה וחלקיות -{}".format(semel91025(df,xlwriter,refmonth,prevmonth)))
+
         common.infoobj.show("מספר עובדים שכמור סמל 100 מעל חודש מלא - {}".format(semel100(df,xlwriter,refmonth,prevmonth)))
+
         common.infoobj.show("מספר עובדים בחוזה אישי שקיבלו כוננות -{}".format(semel65(df,xlwriter,refmonth,prevmonth)))
+
         common.infoobj.show("מספר עובדים עם הפחתות שעות גדולות - {}".format(semel119(df,xlwriter,refmonth,prevmonth)))
+
         common.infoobj.show("מספר מקרים של אי שוויון בין סמל 6666 לסמל 6667 - {}".format(semel6666(df,xlwriter,refmonth,prevmonth)))
-        common.infoobj.show("מספר עובדים עם שיעור מס וביטוח לאומי גבוהים - {}".format(semeltax(df,xlwriter,refmonth,prevmonth)))
+
         common.infoobj.show("מספר מקרים של סמל שמופיע פעם אחת - {}".format(semelonce(df,xlwriter,refmonth,prevmonth)))
-        common.infoobj.show("מספר עובדים עם הפרשי ברוטו גדולים - {}".format(grosscur(df,xlwriter,refmonth,prevmonth)))
-        common.infoobj.show("מספר מקרים של הפרשי רטרו גבוהים - {}".format(grossretro(df,xlwriter,refmonth,prevmonth)))
-        common.infoobj.show("מספר עובדים עם קופות חריגות - {}".format(fundsdeduct(df,xlwriter,refmonth,prevmonth)))
+
         common.infoobj.show("מקרים של ביטוח רכב בסכום חורג - {}".format(semel149150(df,xlwriter,refmonth,prevmonth)))
+       
+        
+        common.infoobj.show("מספר עובדים עם בסיס פנסיה לא סביר ביחס לערך שעה וחלקיות -{}".format(t_semel91025.result()))      
+        common.infoobj.show("מספר עובדים עם שיעור מס וביטוח לאומי גבוהים - {}".format(t_semeltax.result()))
+        common.infoobj.show("מספר עובדים עם הפרשי ברוטו גדולים - {}".format(t_grosscur.result()))
+        common.infoobj.show("מספר מקרים של הפרשי רטרו גבוהים - {}".format(t_grossretro.result()))
+        common.infoobj.show("מספר עובדים עם קופות חריגות - {}".format(t_fundsdeduct.result()))
+        
+        pool.shutdown(wait=True)
 
         xlwriter.close()
         common.infoobj.close()       

@@ -7,6 +7,20 @@ myfunc.submit = function(){ //request can be insert or update
 
     fdata.append("hazuti",document.getElementById("hazuti").files[0]);
 
+    requestlist = []
+    i = 0
+
+    for (eachsemel of document.querySelectorAll("input[type =checkbox]")){
+        if (eachsemel.checked == true){
+            requestlist[i] = eachsemel.value
+            i++
+        }
+    }
+
+    console.log (requestlist)
+
+    fdata.append("requestlist",JSON.stringify(requestlist));
+
     xhr.open('POST',"http://localhost:"+ui.port,true)
 
     xhr.onreadystatechange = function() {

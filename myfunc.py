@@ -28,6 +28,8 @@ def myfunc(queryobj):
     try:
         postdict = queryobj._POST()
 
+        requestlist = json.loads(postdict["requestlist"])
+
         filesdict = queryobj._FILES()       
 
         buff = BytesIO(filesdict['hazuti'][1])
@@ -50,39 +52,34 @@ def myfunc(queryobj):
         print(df.head(10))
 
         common.infoobj = common.infopopup() #common.root
-
-        pool = concurrent.futures.ThreadPoolExecutor(max_workers=5)
        
-        t_semel91025 = pool.submit(semel91025,df,xlwriter,refmonth,prevmonth)
-        t_semeltax = pool.submit(semeltax,df,xlwriter,refmonth,prevmonth)
-        t_grosscur = pool.submit(grosscur,df,xlwriter,refmonth,prevmonth)
-        t_grossretro = pool.submit(grossretro,df,xlwriter,refmonth,prevmonth)
-        t_fundsdeduct = pool.submit(fundsdeduct,df,xlwriter,refmonth,prevmonth)
+        checkpool = {}
 
-        
-        common.infoobj.show("עובדים עם נסיעות ללא שכר -{}".format(semel1616(df,xlwriter,refmonth,prevmonth)))
+        checkpool["semel65"] = [semel65,"מספר עובדים בחוזה אישי שקיבלו כוננות -{}"]
+        checkpool["semel100"] = [semel100, "מספר עובדים שכמור סמל 100 מעל חודש מלא - {}"]
+        checkpool["semel119"] = [semel119, "מספר עובדים עם הפחתות שעות גדולות - {}"]
+        checkpool["semel1616"] = [semel1616, "עובדים עם נסיעות ללא שכר -{}"]
+        checkpool["semel6666"] = [semel6666, "מספר מקרים של אי שוויון בין סמל 6666 לסמל 6667 - {}"]
+        checkpool["semel90148"] = [semel90148, "מספר עובדים עם חלקיות מעל 100% -{}"]
+        checkpool["semel91025"] = [semel91025,"מספר עובדים עם בסיס פנסיה לא סביר ביחס לערך שעה וחלקיות -{}"]
+        checkpool["semel149150"] = [semel149150, "מקרים של ביטוח רכב בסכום חורג - {}"]
+        checkpool["semelonce"] = [semelonce,"מספר מקרים של סמל שמופיע פעם אחת - {}"]
+        checkpool["grosscur"] = [grosscur,"מספר עובדים עם הפרשי ברוטו גדולים - {}"]
+        checkpool["semeltax"] = [semeltax,"מספר עובדים עם שיעור מס וביטוח לאומי גבוהים - {}"]
+        checkpool["grossretro"] = [grossretro,"מספר מקרים של הפרשי רטרו גבוהים - {}"]
+        checkpool["fundsdeduct"] = [fundsdeduct,"מספר עובדים עם קופות חריגות - {}"]
 
-        common.infoobj.show("מספר עובדים עם חלקיות מעל 100% -{}".format(semel90148(df,xlwriter,refmonth,prevmonth)))
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=13)
 
-        common.infoobj.show("מספר עובדים שכמור סמל 100 מעל חודש מלא - {}".format(semel100(df,xlwriter,refmonth,prevmonth)))
+        poolitem = []
+        i = 0
 
-        common.infoobj.show("מספר עובדים בחוזה אישי שקיבלו כוננות -{}".format(semel65(df,xlwriter,refmonth,prevmonth)))
+        for reqestcheck in requestlist:
+            poolitem.append(pool.submit(checkpool[reqestcheck][0],df,xlwriter,refmonth,prevmonth))
+            common.infoobj.show(checkpool[reqestcheck][0][1].format(poolitem[i].result()))
+            i=i+1
+        #
 
-        common.infoobj.show("מספר עובדים עם הפחתות שעות גדולות - {}".format(semel119(df,xlwriter,refmonth,prevmonth)))
-
-        common.infoobj.show("מספר מקרים של אי שוויון בין סמל 6666 לסמל 6667 - {}".format(semel6666(df,xlwriter,refmonth,prevmonth)))
-
-        common.infoobj.show("מספר מקרים של סמל שמופיע פעם אחת - {}".format(semelonce(df,xlwriter,refmonth,prevmonth)))
-
-        common.infoobj.show("מקרים של ביטוח רכב בסכום חורג - {}".format(semel149150(df,xlwriter,refmonth,prevmonth)))
-       
-        
-        common.infoobj.show("מספר עובדים עם בסיס פנסיה לא סביר ביחס לערך שעה וחלקיות -{}".format(t_semel91025.result()))      
-        common.infoobj.show("מספר עובדים עם שיעור מס וביטוח לאומי גבוהים - {}".format(t_semeltax.result()))
-        common.infoobj.show("מספר עובדים עם הפרשי ברוטו גדולים - {}".format(t_grosscur.result()))
-        common.infoobj.show("מספר מקרים של הפרשי רטרו גבוהים - {}".format(t_grossretro.result()))
-        common.infoobj.show("מספר עובדים עם קופות חריגות - {}".format(t_fundsdeduct.result()))
-        
         pool.shutdown(wait=True)
 
         xlwriter.close()

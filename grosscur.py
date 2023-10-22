@@ -114,5 +114,5 @@ def grosscur(df,xlwriter,refmonth,prevmonth):
 
     resdf.head(10)
 
-    return len(resdf["Empid"].unique())
+    return [len(resdf["Empid"].unique()),"grosscur"]
 #

@@ -25,7 +25,7 @@ from semel149150 import semel149150
 CODESTR = "hazuticheck"
 
 def myfunc(queryobj):
-    try:
+#    try:
         postdict = queryobj._POST()
 
         requestlist = json.loads(postdict["requestlist"])
@@ -51,7 +51,7 @@ def myfunc(queryobj):
 
         print(df.head(10))
 
-        common.infoobj = common.infopopup() #common.root
+        infoobj = common.infopopup() #common.root
        
         checkpool = {}
 
@@ -69,21 +69,28 @@ def myfunc(queryobj):
         checkpool["grossretro"] = [grossretro,"מספר מקרים של הפרשי רטרו גבוהים - {}"]
         checkpool["fundsdeduct"] = [fundsdeduct,"מספר עובדים עם קופות חריגות - {}"]
 
-        pool = concurrent.futures.ThreadPoolExecutor(max_workers=13)
-
-        poolitem = []
-        i = 0
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=3)   
+        heavyprocess = []
 
         for reqestcheck in requestlist:
-            poolitem.append(pool.submit(checkpool[reqestcheck][0],df,xlwriter,refmonth,prevmonth))
-            common.infoobj.show(checkpool[reqestcheck][0][1].format(poolitem[i].result()))
-            i=i+1
+            if reqestcheck in ["semel91025","grosscur", "grossretro"]:
+                heavyprocess.append(pool.submit(checkpool[reqestcheck][0],df,xlwriter,refmonth,prevmonth))
+
+            else:
+                res = checkpool[reqestcheck][0](df,xlwriter,refmonth,prevmonth)
+                infoobj.show(checkpool[reqestcheck][1].format(res))
+            #
+        #
+
+        for hp in concurrent.futures.as_completed(heavyprocess):
+             res = hp.result()
+             infoobj.show(checkpool[res[1]][1].format(res[0]))
         #
 
         pool.shutdown(wait=True)
 
         xlwriter.close()
-        common.infoobj.close()       
+        infoobj.close()       
 
         #print("POST = " + str(postdict) + "\n")
         #print("FILES = " + str(filesdict) + "\n")
@@ -110,9 +117,9 @@ def myfunc(queryobj):
         return replymsg
     #
     
-    except Exception as e:
-        common.errormsg(title=__name__,message=e)
-        replymsg = json.dumps(["Error","myfunc -" + str(e)]).encode('UTF-8')
-        return replymsg
+#    except Exception as e:
+#        common.errormsg(title=__name__,message=e)
+#        replymsg = json.dumps(["Error","myfunc -" + str(e)]).encode('UTF-8')
+#        return replymsg
     #
 #

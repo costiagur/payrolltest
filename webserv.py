@@ -13,7 +13,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
     #
 
     def processing(self,queryobj):
-        try:        
+#        try:        
             postlist = queryobj._POST()
             print(postlist)
 
@@ -43,8 +43,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
             return myfunc.myfunc(queryobj)
         #
-        except Exception as e:
-            common.errormsg(title=__name__ + "_processing",message=e)
+#        except Exception as e:
+#            common.errormsg(title=__name__ + "_processing",message=e)
         #
     #
 

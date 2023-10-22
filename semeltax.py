@@ -46,5 +46,5 @@ def semeltax(df,xlwriter,refmonth,prevmonth):
 
     resdf.head(10)
     
-    return len(set(resdf["Empid"].values))
+    return len(resdf["Empid"].unique())
 #

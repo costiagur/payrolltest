@@ -52,5 +52,5 @@ def semel91025(df,xlwriter,refmonth,prevmonth):
 
     resdf.head(10)
 
-    return len(resdf)
+    return [len(resdf),"semel91025"]
 #

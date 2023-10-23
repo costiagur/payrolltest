@@ -1,7 +1,7 @@
 #6666 ו 6667 שווים
 
 
-def semel6666(df,xlwriter,refmonth,prevmonth):
+def semel6666(df,xlwriter,refmonth,prevmonth,level="0"):
 
     middf = df[(df["Refdate"] == refmonth)&(df["Elem"].isin(("6666","6667")))]
     if sum(middf["CurAmount"]) != 0:

@@ -1,7 +1,10 @@
 #מס הכנסה גבוה
 import pandas as pd
 
-def semeltax(df,xlwriter,refmonth,prevmonth):
+def semeltax(df,xlwriter,refmonth,prevmonth,level="0.44"):
+ 
+    level = float(level)
+    
     emps = set(df["Empid"])
 
     resdict = dict()
@@ -26,7 +29,7 @@ def semeltax(df,xlwriter,refmonth,prevmonth):
         
         taxrate = tax / gross
         
-        if taxrate > 0.44:
+        if taxrate > level:
             elems = set(df[(df["Empid"] == eachemp)&(df["Elemtype"] == "compulsory deductions")]["Elem"])
             
             for eachelem in elems:

@@ -6,9 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"> 
 
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  
+    <style>
+      .loader { 
+        border: 16px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 16px solid #3498db;
+        width: 50px;
+        height: 50px;
+        animation: spin 2s linear infinite;
+        position: absolute; 
+        top: 30%; left: 50%; z-index:2;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  
   </head>
 
   <body dir="rtl" data-codeword="hazuticheck">
+    <div id="loader" class="loader" style="display: none;"></div> <!--circle displayed while working-->
+
     <div class="w3-container">
       <p>קובץ דוח חזותי, אנגלית, מפורט לפי תאריכי ערך, לשני חודשים
         <input type="file" id="hazuti" class="w3-input" placeholder="קובץ XLS"></p>
@@ -16,58 +37,86 @@
     <div class="w3-container">
       <filedset>
         <label>בקרות:</label>
-        <div>
-          <input type="checkbox"  id="semel65" value="semel65" checked/>
-          <label for="semel65">תשלום כוננות לחוזה אישי</label>
-        </div>
-        <div>
-          <input type="checkbox" id="semel100" value="semel100" checked />
-          <label for="semel100">תשלום סמל 100 בכמות חריגה</label>
-        </div>
-        <div>
-          <input type="checkbox" id="semel119" value="semel119" checked />
-          <label for="semel119">ניכוי שעות בכמות חריגה</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="semel1616" value="semel1616" checked />
-          <label for="semel1616">תשלום נסיעות ללא שכר יסוד</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="semel6666" value="semel6666" checked />
-          <label for="semel6666">תשלום 6666 בסכום שונה מ-6667</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="semel90148" value="semel90148" checked />
-          <label for="semel90148">חלקיות העולה על 110%</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="semel91025" value="semel91025" checked />
-          <label for="semel91025">הפרשי בסיס הפנסיה החורגים מהפרשי חלקיות</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="semel149150" value="semel149150" checked />
-          <label for="semel149150">סכומי ביטוח חובה ומקיף מעל מקסימום</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="semelonce" value="semelonce" checked />
-          <label for="semelonce">סמלים המופעים רק פעם אחת</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="semeltax" value="semeltax" checked />
-          <label for="semeltax">שיעור מס וביטוח לאומי מעל 44%</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="grosscur" value="grosscur" checked />
-          <label for="grosscur">הסבר הפרשים מעל 2000 בברוטו שוטף</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="grossretro" value="grossretro" checked />
-          <label for="grossretro">הסבר הפרשים מעל 2000 בברוטו הפרשים</label>          
-        </div>
-        <div>
-          <input type="checkbox" id="fundsdeduct" value="fundsdeduct" checked />
-          <label for="fundsdeduct">שיערוי ניכויים מעל 15% או פחות מ- 3%</label>          
-        </div>
+        <table>
+        <tr>
+          <td><input type="checkbox"  id="semel65" value="semel65" checked/></td>
+          <td><label for="semel65">תשלום כוננות לחוזה אישי</label></td>
+          <td></td>
+          <td><input type="text" id="semel65_level" value="" style="display:none;" class="w3-input"></td> 
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="semel100" value="semel100" checked /></td>
+          <td><label for="semel100">תשלום סמל 100 בכמות חריגה</label></td>
+          <td><label for="semel100_level">רף שעות:</label></td>
+          <td><input type="text" id="semel100_level" value="177" class="w3-input"></td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="semel119" value="semel119" checked /></td>
+          <td><label for="semel119">ניכוי שעות בכמות חריגה</label></td>
+          <td><label for="semel119_level">רף שעות:</label></td>
+          <td><input type="text" id="semel119_level" value="100" class="w3-input"> </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="semel1616" value="semel1616" checked /></td>
+          <td><label for="semel1616">תשלום נסיעות ללא שכר יסוד</label></td>
+          <td></td>
+          <td><input type="text" id="semel1616_level" value="" style="display:none;"> </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="semel6666" value="semel6666" checked /></td>
+          <td><label for="semel6666">תשלום 6666 בסכום שונה מ-6667</label></td>
+          <td></td>
+          <td><input type="text" id="semel6666_level" value="" style="display:none;">  </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="semel90148" value="semel90148" checked /></td>
+          <td><label for="semel90148">חלקיות העולה על 110%</label></td>
+          <td><label for="semel90148_level">רף רגישות:</label></td>
+          <td><input type="text" id="semel90148_level" value="1.1" class="w3-input"></td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="semel91025" value="semel91025" checked /></td>
+          <td><label for="semel91025">הפרשי בסיס הפנסיה החורגים מהפרשי חלקיות</label></td>
+          <td><label for="semel91025_level">טווח רגישות:</label></td>
+          <td><input type="text" id="semel91025_level" value="0.1" class="w3-input"> </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="semel149150" value="semel149150" checked /></td>
+          <td><label for="semel149150">סכומי ביטוח חובה ומקיף מעל מקסימום</label></td>
+          <td><label for="semel149150_level">גבולות:</label></td>
+          <td><input type="text" id="semel149150_level" value="1750,7000" class="w3-input"></td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="semelonce" value="semelonce" checked /></td>
+          <td><label for="semelonce">סמלים המופעים רק פעם אחת</label></td>
+          <td> <label for="semelonce_level">טווח רגישות:</label></td>
+          <td><input type="text" id="semelonce_level" value="0.05" class="w3-input"></td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="semeltax" value="semeltax" checked /></td>
+          <td><label for="semeltax">שיעור מס וביטוח לאומי מעל 44%</label> </td>
+          <td><label for="semeltax_level">רף עליון:</label></td>
+          <td><input type="text" id="semeltax_level" value="0.44" class="w3-input"></td> 
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="grosscur" value="grosscur" checked /></td>
+          <td><label for="grosscur">הסבר הפרשים מעל 2000 בברוטו שוטף</label></td>
+          <td><label for="grosscur_level">רף עליון:</label></td>
+          <td><input type="text" id="grosscur_level" value="2000,0.2" class="w3-input"></td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="grossretro" value="grossretro" checked /></td>
+          <td><label for="grossretro">הסבר הפרשים מעל 2000 בברוטו הפרשים</label></td>
+          <td><label for="grossretro_level">רף עליון:</label></td>
+          <td><input type="text" id="grossretro_level" value="2000,0.2" class="w3-input"></td>
+        </tr>
+        <tr>
+          <td><input type="checkbox" id="fundsdeduct" value="fundsdeduct" checked /></td>
+          <td><label for="fundsdeduct">שיערוי ניכויים מעל 15% או פחות מ- 3%</label></td>
+          <td><label for="fundsdeduct_level">רף עליון ותחתון:</label></td>
+          <td><input type="text" id="fundsdeduct_level" value="0.15,0.03" class="w3-input"></td>
+        </tr>
+      </table>
       </filedset> 
     </div>
     <br/>

@@ -1,7 +1,9 @@
 import pandas as pd
 #בסיס פנסיה מחושב אינו סביר ביחס לבסיס פנסיה בתלוש. לדוגמה כאשר חלקיות אינה סבירה ביחס לבסיס הפנסיה
 
-def semel91025(df,xlwriter,refmonth,prevmonth):
+def semel91025(df,xlwriter,refmonth,prevmonth,level="0.1"):
+
+    level = float(level)
     filterout = set(df[df["mn"]==99]["Empid"].values)
     semels = ("90148","91203 - Value time","91025","119","5843","5842","1","2151","1039","30501")
 
@@ -33,7 +35,7 @@ def semel91025(df,xlwriter,refmonth,prevmonth):
             ratio = estbasis/(bsispensia if bsispensia != 0 else 1) 
 
 
-            if ratio > 1.1 or ratio < 0.9:
+            if ratio > 1+level or ratio < 1-level:
                 resdict["Empid"].append(eachid)
                 resdict["wageRate"].append(helkiut)
                 resdict["EstBasis"].append(estbasis)

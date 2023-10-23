@@ -1,7 +1,7 @@
 #השוואת ברוטו שוטף ללא חד שנתיים
 import pandas as pd
 
-def grosscur(df,xlwriter,refmonth,prevmonth):
+def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
     
     grouped = df.groupby(by = ["Empid","Elemtype","Refdate"],as_index=False,group_keys=True)
     groupdf = grouped.sum(["PrevAmount","CurAmount"])
@@ -17,8 +17,10 @@ def grosscur(df,xlwriter,refmonth,prevmonth):
     resdict["Diff"] = []
     resdict["Values"] = []
 
-    cutoff = 0.2
-    cutoamount = 2000
+    levellist = level.split(",")
+
+    cutoff = min([float(eachlevel) for eachlevel in levellist])
+    cutoamount = max([float(eachlevel) for eachlevel in levellist])
 
     for eachemp in empids:
         grosscurr = sum(groupdf[(groupdf["Empid"] == eachemp)&(groupdf["Elemtype"] == "addition components")&(groupdf["Refdate"] == refmonth)]["CurAmount"])

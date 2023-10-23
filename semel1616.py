@@ -1,7 +1,7 @@
 
 #תשלום נסיעות ללא סמל 1 או סמל 100
 
-def semel1616(df,xlwriter,refmonth,prevmonth):
+def semel1616(df,xlwriter,refmonth,prevmonth,level="0"):
 
     middf = df[df["Elem"].isin(['1','100','1616'])&(df["CurAmount"]>0)&(df["Refdate"] == refmonth)]
     resid = []

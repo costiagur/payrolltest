@@ -1,7 +1,7 @@
     #הפרשי ברוטו ברטרו
 import pandas as pd
 
-def grossretro(df,xlwriter,refmonth,prevmonth):
+def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
 
     grouped = df.groupby(by = ["Empid","Elemtype","Refdate"],as_index=False,group_keys=True)
     groupdf = grouped.sum("CurAmount")
@@ -11,9 +11,11 @@ def grossretro(df,xlwriter,refmonth,prevmonth):
     resdict["Elem"] = []
     resdict["Diff"] = []
     resdict["Values"] = []
+   
+    levellist = level.split(",")
 
-    cutoff = 0.2
-    cutoamount = 2000
+    cutoff = min([float(eachlevel) for eachlevel in levellist])
+    cutoamount = max([float(eachlevel) for eachlevel in levellist])
 
     for eachemp in empids:
         grossretro = sum(groupdf[(groupdf["Empid"] == eachemp)&(groupdf["Elemtype"] == "addition components")&(groupdf["Refdate"] < refmonth)]["CurAmount"])

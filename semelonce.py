@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 
-def semelonce(df,xlwriter,refmonth,prevmonth):
+def semelonce(df,xlwriter,refmonth,prevmonth,level="0"):
 
     middf = df[(df["Division"] != 90)&(df["Refdate"]==refmonth)&(df["CurAmount"] != 0)&(df["Elemtype"] == "addition components")]
 

@@ -1,7 +1,7 @@
 #בדיקה שך סכום הביטוח אינו עולה על הסכום המרבי
 import pandas as pd
 
-def semel149150(df,xlwriter,refmonth,prevmonth):
+def semel149150(df,xlwriter,refmonth,prevmonth,level="7000,1750"):
 
     newdict= dict()
     newdict["Empid"] = []
@@ -16,16 +16,20 @@ def semel149150(df,xlwriter,refmonth,prevmonth):
     #
     vehdf["Total"] = sumlist
 
+    levellist = level.split(",")
+
+    maxval = max([float(eachlevel) for eachlevel in levellist])
+    minval = min([float(eachlevel) for eachlevel in levellist])
 
     for eachemp in vehdf["Empid"].unique():
-        if sum(vehdf[vehdf["Empid"] == eachemp]["Total"]) > 7000:
+        if sum(vehdf[vehdf["Empid"] == eachemp]["Total"]) > maxval:
             for eachrow in range(0,len(vehdf[vehdf["Empid"] == eachemp]),1):
                 newdict["Empid"].append(eachemp)
                 newdict["Elem"].append(vehdf[vehdf["Empid"] == eachemp].iloc[eachrow,9])
                 newdict["PrevAmount"].append(vehdf[vehdf["Empid"] == eachemp].iloc[eachrow,10])
                 newdict["CurAmount"].append(vehdf[vehdf["Empid"] == eachemp].iloc[eachrow,12])
             #
-        elif sum(vehdf[(vehdf["Empid"] == eachemp)&(vehdf["Elem"] .isin(("149","7149")))]["Total"]) > 1750:
+        elif sum(vehdf[(vehdf["Empid"] == eachemp)&(vehdf["Elem"] .isin(("149","7149")))]["Total"]) > minval:
             for eachrow in range(0,len(vehdf[(vehdf["Empid"] == eachemp)&(vehdf["Elem"].isin(("149","7149")))]),1):
                 newdict["Empid"].append(eachemp)
                 newdict["Elem"].append(vehdf[(vehdf["Empid"] == eachemp)&(vehdf["Elem"].isin(("149","7149")))].iloc[eachrow,9])

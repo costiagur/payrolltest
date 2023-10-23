@@ -1,8 +1,10 @@
 #הפחתות שעות גדולות.
 
-def semel119(df,xlwriter,refmonth,prevmonth):
+def semel119(df,xlwriter,refmonth,prevmonth,level="100"):
 
-    middf = df[(df["Refdate"] == refmonth)&((df["Elem"] == "119")&(df["CurQuantity"] > 100))]
+    level = float(level)
+    
+    middf = df[(df["Refdate"] == refmonth)&((df["Elem"] == "119")&(df["CurQuantity"] > level))]
     middf.to_excel(xlwriter,sheet_name="large_119",index=False)
 
     middf.head(10)

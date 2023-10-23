@@ -2,13 +2,18 @@
 
 import pandas as pd
 
-def fundsdeduct(df,xlwriter,refmonth,prevmonth):
+def fundsdeduct(df,xlwriter,refmonth,prevmonth,level="0.03,0.15"):
     
     unneeded = ("630","629","666","634","636","610","612","671","622","624","91030","91031")
     cols = ["Empid","mn","Refdate","Elemtype","Elem","CurAmount"]
     middf = df[(df["Division"] != 90)&(df["Elemtype"].isin(("addition components","voluntary deductions"))&(~df["Elem"].isin(unneeded))&(df["CurAmount"]!=0.0))][cols]
     grouped = middf.groupby(by = ["Empid","Elemtype"],as_index=False,group_keys=True)
     groupeddf = grouped.sum("CurAmount")
+
+    levellist = level.split(",")
+
+    maxval = max([float(eachlevel) for eachlevel in levellist])
+    minxval = min([float(eachlevel) for eachlevel in levellist])
 
     newdict= dict()
     newdict["Empid"] = []
@@ -24,7 +29,7 @@ def fundsdeduct(df,xlwriter,refmonth,prevmonth):
         
         if tosafot == 0 and voldeduct == 0:
             pass       
-        elif (tosafot == 0 and voldeduct != 0) or voldeduct / tosafot > 0.15 or voldeduct / tosafot < 0.03:
+        elif (tosafot == 0 and voldeduct != 0) or voldeduct / tosafot > maxval or voldeduct / tosafot < minxval:
             for eachrow in range(0,len(middf[middf["Empid"] == eachemp]),1):
                 newdict["Empid"].append(eachemp)
                 newdict["mn"].append(middf[middf["Empid"] == eachemp].iloc[eachrow,1])

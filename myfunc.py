@@ -29,6 +29,7 @@ def myfunc(queryobj):
         postdict = queryobj._POST()
 
         requestlist = json.loads(postdict["requestlist"])
+        reqlevel = json.loads(postdict["reqlevel"])
 
         filesdict = queryobj._FILES()       
 
@@ -74,10 +75,10 @@ def myfunc(queryobj):
 
         for reqestcheck in requestlist:
             if reqestcheck in ["semel91025","grosscur", "grossretro"]:
-                heavyprocess.append(pool.submit(checkpool[reqestcheck][0],df,xlwriter,refmonth,prevmonth))
+                heavyprocess.append(pool.submit(checkpool[reqestcheck][0],df,xlwriter,refmonth,prevmonth,reqlevel[reqestcheck+"_level"]))
 
             else:
-                res = checkpool[reqestcheck][0](df,xlwriter,refmonth,prevmonth)
+                res = checkpool[reqestcheck][0](df,xlwriter,refmonth,prevmonth,reqlevel[reqestcheck+"_level"])
                 infoobj.show(checkpool[reqestcheck][1].format(res))
             #
         #

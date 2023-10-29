@@ -21,6 +21,8 @@ from grosscur import grosscur
 from grossretro import grossretro
 from fundsdeduct import fundsdeduct
 from semel149150 import semel149150
+from semel1313 import semel1313
+
 
 CODESTR = "hazuticheck"
 
@@ -48,6 +50,14 @@ def myfunc(queryobj):
         refmonth = df["Refdate"].max()
         prevmonth = refmonth.replace(year = refmonth.year -1) if refmonth.month == 12 else refmonth.replace(month=refmonth.month-1)
 
+        buff = BytesIO(filesdict['f1313'][1])
+
+        df1313 = pd.read_csv(buff,sep='\t',header=0,encoding="cp1255",na_filter=True,skip_blank_lines=True,parse_dates=['תוקף עד','תוקף מ'],dayfirst=True,usecols=list(range(0,6,1)))
+        df1313.rename(columns={"מספר זהות ":"Empid","שם עובד":"Empname","מ.נ":"mn","תוקף מ":"Refdate","תוקף עד":"Enddate","כמות":"Quantity"}, inplace=True)
+        for _,i2,i3 in list(df1313[["Empid","mn"]].to_records()):
+            df.loc[(df["Empid"] == i2)&(df["mn"] == i3)&(df["Refdate"] == refmonth)&(df["Elem"] == "1"),"CurQuantity"] =sum(df1313.loc[(df1313["Empid"] == i2)&(df1313["mn"] == i3),"Quantity"])
+        #
+
         xlwriter = pd.ExcelWriter("{}{}{}".format("drafts\\",refmonth.strftime("%Y-%m"),".xlsx"))
 
         print(df.head(10))
@@ -69,6 +79,7 @@ def myfunc(queryobj):
         checkpool["semeltax"] = [semeltax,"מספר עובדים עם שיעור מס וביטוח לאומי גבוהים - {}"]
         checkpool["grossretro"] = [grossretro,"מספר מקרים של הפרשי רטרו גבוהים - {}"]
         checkpool["fundsdeduct"] = [fundsdeduct,"מספר עובדים עם קופות חריגות - {}"]
+        checkpool["semel1313"] = [semel1313,"מספר עובדים שיש נוכחות אך אין שכר יסוד - {}"]
 
         pool = concurrent.futures.ThreadPoolExecutor(max_workers=3)   
         heavyprocess = []
@@ -76,6 +87,10 @@ def myfunc(queryobj):
         for reqestcheck in requestlist:
             if reqestcheck in ["semel91025","grosscur", "grossretro"]:
                 heavyprocess.append(pool.submit(checkpool[reqestcheck][0],df,xlwriter,refmonth,prevmonth,reqlevel[reqestcheck+"_level"]))
+            
+            elif reqestcheck == "semel1313":
+                res = semel1313(df,df1313,xlwriter,refmonth,prevmonth,reqlevel["semel1313_level"])
+                infoobj.show(checkpool["semel1313"][1].format(res))
 
             else:
                 res = checkpool[reqestcheck][0](df,xlwriter,refmonth,prevmonth,reqlevel[reqestcheck+"_level"])

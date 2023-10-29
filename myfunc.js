@@ -6,6 +6,7 @@ myfunc.submit = function(){ //request can be insert or update
     var fdata = new FormData();
 
     fdata.append("hazuti",document.getElementById("hazuti").files[0]);
+    fdata.append("f1313",document.getElementById("f1313").files[0]);
 
     requestlist = []
     reqlevel = {}

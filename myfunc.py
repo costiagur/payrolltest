@@ -22,7 +22,7 @@ from grossretro import grossretro
 from fundsdeduct import fundsdeduct
 from semel149150 import semel149150
 from semel1313 import semel1313
-
+from semel131365 import semel131365
 
 CODESTR = "hazuticheck"
 
@@ -80,6 +80,7 @@ def myfunc(queryobj):
         checkpool["grossretro"] = [grossretro,"מספר מקרים של הפרשי רטרו גבוהים - {}"]
         checkpool["fundsdeduct"] = [fundsdeduct,"מספר עובדים עם קופות חריגות - {}"]
         checkpool["semel1313"] = [semel1313,"מספר עובדים שיש נוכחות אך אין שכר יסוד - {}"]
+        checkpool["semel131365"] = [semel131365,"מספר עובדים עם כמות שעות גבוהה מדי - {}"]
 
         pool = concurrent.futures.ThreadPoolExecutor(max_workers=3)   
         heavyprocess = []

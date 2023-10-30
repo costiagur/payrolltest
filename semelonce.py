@@ -57,6 +57,6 @@ def semelonce(df,xlwriter,refmonth,prevmonth,level="0"):
 
     resdf.to_excel(xlwriter,sheet_name="semel_once",index=False)
 
-    return len(resdf)
+    return len(resdf["Empid"].unique())
 
 #

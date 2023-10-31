@@ -23,6 +23,7 @@ from fundsdeduct import fundsdeduct
 from semel149150 import semel149150
 from semel1313 import semel1313
 from semel131365 import semel131365
+from semel94010 import semel94010
 
 CODESTR = "hazuticheck"
 
@@ -81,6 +82,7 @@ def myfunc(queryobj):
         checkpool["fundsdeduct"] = [fundsdeduct,"מספר עובדים עם קופות חריגות - {}"]
         checkpool["semel1313"] = [semel1313,"מספר עובדים שיש נוכחות אך אין שכר יסוד - {}"]
         checkpool["semel131365"] = [semel131365,"מספר עובדים עם כמות שעות גבוהה מדי - {}"]
+        checkpool["semel94010"] = [semel94010,"מספר עובדים עם ברוטו ביטוח לאומי מעל לתקרה - {}"]
 
         pool = concurrent.futures.ThreadPoolExecutor(max_workers=3)   
         heavyprocess = []

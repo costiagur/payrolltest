@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1"> 
 
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="w3.css">
   
     <style>
       .loader { 
@@ -23,133 +23,226 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
+      .marginright {
+        margin-right: 0.5%;
+      }
+      .nonvisible {
+        visibility: hidden;
+      }
     </style>
   
   </head>
 
-  <body dir="rtl" data-codeword="hazuticheck">
+  <body dir="rtl" data-codeword="hazuticheck" class="w3-sand">
     <div id="loader" class="loader" style="display: none;"></div> <!--circle displayed while working-->
 
-    <div class="w3-container">
-      <p>קובץ דוח חזותי, אנגלית, מפורט לפי תאריכי ערך, לשני חודשים
-        <input type="file" id="hazuti" class="w3-input" placeholder="קובץ XLS"></p>
-       <p>קובץ 1313, חודש שוטף
-          <input type="file" id="f1313" class="w3-input" placeholder="קובץ XLS"></p>
+      <div class="w3-row-padding w3-section">
+        <div class="w3-quarter w3-card-4 marginright w3-padding-small">
+          <div>
+            דוח חזותי, אנגלית, מפורט לפי תאריכי ערך, לשני חודשים
+          </div>
+          <div>
+            <input type="file" id="hazuti" class="w3-input" placeholder="קובץ XLS">
+          </div>  
+        </div>
+      <div class="w3-quarter w3-card-4 marginright w3-padding-small">
+        <div>
+          פלט 1313, חודש שוטף
+        </div>
+        <div>
+          <input type="file" id="f1313" class="w3-input" placeholder="קובץ XLS">
+        </div>
+      </div>
+      <div class="w3-quarter w3-card-4 marginright w3-padding-small">
+        <div>
+          הרצת בדיקה
+          <input type="button" class="w3-button w3-border w3-round" value="Run" onclick="myfunc.submit()">
+        </div>
+        <div><br></div>
+      </div>
     </div>
-    <div class="w3-container">
-      <filedset>
-        <label>בקרות:</label>
-        <table>
-        <tr>
-          <td><input type="checkbox"  id="semel65" value="semel65" checked/></td>
-          <td><label for="semel65">תשלום כוננות לחוזה אישי</label></td>
-          <td></td>
-          <td><input type="text" id="semel65_level" value="" style="display:none;" class="w3-input"></td> 
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel100" value="semel100" checked /></td>
-          <td><label for="semel100">תשלום סמל 100 בכמות חריגה</label></td>
-          <td><label for="semel100_level">רף שעות:</label></td>
-          <td><input type="text" id="semel100_level" value="177" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel119" value="semel119" checked /></td>
-          <td><label for="semel119">ניכוי שעות בכמות חריגה</label></td>
-          <td><label for="semel119_level">רף שעות:</label></td>
-          <td><input type="text" id="semel119_level" value="100" class="w3-input"> </td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel1616" value="semel1616" checked /></td>
-          <td><label for="semel1616">תשלום נסיעות ללא שכר יסוד</label></td>
-          <td></td>
-          <td><input type="text" id="semel1616_level" value="" style="display:none;"> </td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel6666" value="semel6666" checked /></td>
-          <td><label for="semel6666">תשלום 6666 בסכום שונה מ-6667</label></td>
-          <td></td>
-          <td><input type="text" id="semel6666_level" value="" style="display:none;">  </td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel90148" value="semel90148" checked /></td>
-          <td><label for="semel90148">חלקיות העולה על 110%</label></td>
-          <td><label for="semel90148_level">רף רגישות:</label></td>
-          <td><input type="text" id="semel90148_level" value="1.1" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel91025" value="semel91025" checked /></td>
-          <td><label for="semel91025">הפרשי בסיס הפנסיה החורגים מהפרשי חלקיות</label></td>
-          <td><label for="semel91025_level">טווח רגישות:</label></td>
-          <td><input type="text" id="semel91025_level" value="0.1" class="w3-input"> </td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel149150" value="semel149150" checked /></td>
-          <td><label for="semel149150">סכומי ביטוח חובה ומקיף מעל מקסימום</label></td>
-          <td><label for="semel149150_level">גבולות:</label></td>
-          <td><input type="text" id="semel149150_level" value="1750,7000" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semelonce" value="semelonce" checked /></td>
-          <td><label for="semelonce">סמלים המופעים רק פעם אחת</label></td>
-          <td> <label for="semelonce_level">טווח רגישות:</label></td>
-          <td><input type="text" id="semelonce_level" value="0.05" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semeltax" value="semeltax" checked /></td>
-          <td><label for="semeltax">שיעור מס וביטוח לאומי מעל אחוז גבוה</label> </td>
-          <td><label for="semeltax_level">רף עליון:</label></td>
-          <td><input type="text" id="semeltax_level" value="0.44" class="w3-input"></td> 
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="grosscur" value="grosscur" checked /></td>
-          <td><label for="grosscur">הסבר הפרשים מעל סכום מסוים בברוטו שוטף</label></td>
-          <td><label for="grosscur_level">רף עליון:</label></td>
-          <td><input type="text" id="grosscur_level" value="2000,0.2" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="grossretro" value="grossretro" checked /></td>
-          <td><label for="grossretro">הסבר הפרשים מעל סכום מסוים בברוטו הפרשים</label></td>
-          <td><label for="grossretro_level">רף עליון:</label></td>
-          <td><input type="text" id="grossretro_level" value="2000,0.2" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="fundsdeduct" value="fundsdeduct" checked /></td>
-          <td><label for="fundsdeduct">שיעורי ניכויים מעל אחוז גבוה או פחות מאחוז נמוך</label></td>
-          <td><label for="fundsdeduct_level">רף עליון ותחתון:</label></td>
-          <td><input type="text" id="fundsdeduct_level" value="0.15,0.03" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel1313" value="semel1313" checked /></td>
-          <td><label for="semel1313">שעות נוכחות ללא שכר</label></td>
-          <td><label for="semel1313_level">מינימום שעות</label></td>
-          <td><input type="text" id="semel1313_level" value="8.5" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel131365" value="semel131365" checked /></td>
-          <td><label for="semel131365">כמות שעות עבודה גבוהה מאוד</label></td>
-          <td><label for="semel131365_level">מינימום שעות</label></td>
-          <td><input type="text" id="semel131365_level" value="264" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semel94010" value="semel94010" checked /></td>
-          <td><label for="semel94010">ברוטו ביטוח לאומי מעל לתקרה</label></td>
-          <td><label for="semel94010_level">תקרת ביטוח לאומי:</label></td>
-          <td><input type="text" id="semel94010_level" value="47465" class="w3-input"></td>
-        </tr>
-        <tr>
-          <td><input type="checkbox" id="semeltwice" value="semeltwice" checked /></td>
-          <td><label for="semeltwice">סמל שכר שמופיע יותר מפעם באותו תאריך ערך</label></td>
-          <td><label for="semeltwice_level">מעל מספר מופעים</label></td>
-          <td><input type="text" id="semeltwice_level" value="1" class="w3-input"></td>
-        </tr>
-      </table>
-      </filedset> 
+          
+
+    <div class="w3-row-padding w3-section" >
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox"  id="semel65" value="semel65" class="w3-check" checked/>
+            <label for="semel65">תשלום כוננות לחוזה אישי</label>
+          </header>
+          <div class="w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
+            <input type="text" id="semel65_level" value="">
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel6666" value="semel6666" class="w3-check" checked />
+            <label for="semel6666">תשלום 6666 בסכום שונה מ-6667</label>
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
+            <input type="text" id="semel6666_level" value="">
+          </div>  
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel1616" value="semel1616" class="w3-check" checked />
+            <label for="semel1616">תשלום נסיעות ללא שכר יסוד</label>  
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
+            <input type="text" id="semel1616_level" value="" >
+          </div>  
+        </div>
     </div>
-    <br/>
-    <br/>
-    <div class="w3-container">
-      <input type="button" onclick='myfunc.submit()' class="w3-btn w3-round w3-light-grey" value="חשב">
+    <div class="w3-row-padding w3-section">
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel90148" value="semel90148" class="w3-check" checked />
+            <label for="semel90148">חלקיות העולה על 110%</label>
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semel90148_level">רף רגישות</label>
+            <input type="text" id="semel90148_level" value="1.1" class="w3-input">
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel100" value="semel100" class="w3-check" checked />
+            <label for="semel100">תשלום סמל 100 בכמות חריגה</label>
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semel100_level">רף שעות</label>
+            <input type="text" id="semel100_level" value="177" class="w3-input">
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel119" value="semel119" class="w3-check" checked />
+            <label for="semel119">ניכוי שעות בכמות חריגה</label>
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semel119_level">רף שעות</label>
+            <input type="text" id="semel119_level" value="100" class="w3-input">
+          </div>
+        </div>
     </div>
+    <div class="w3-row-padding w3-section ">
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel91025" value="semel91025" class="w3-check" checked />
+            <label for="semel91025">הפרשי בסיס הפנסיה החורגים מהפרשי חלקיות</label>
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semel91025_level">טווח רגישות</label>
+            <input type="text" id="semel91025_level" value="0.1" class="w3-input">
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel149150" value="semel149150" class="w3-check" checked />
+            <label for="semel149150">סכומי ביטוח חובה ומקיף מעל מקסימום</label>
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semel149150_level">גבולות</label>
+            <input type="text" id="semel149150_level" value="1750,7000" class="w3-input">        
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semelonce" value="semelonce" class="w3-check" checked />
+            <label for="semelonce">סמלים המופעים רק פעם אחת</label>
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semelonce_level">טווח רגישות</label>
+            <input type="text" id="semelonce_level" value="0.05" class="w3-input">
+          </div>
+        </div>
+    </div>
+    <div class="w3-row-padding w3-section">
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semeltax" value="semeltax" class="w3-check" checked />
+            <label for="semeltax">שיעור מס וביטוח לאומי מעל אחוז גבוה</label>   
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semeltax_level">רף עליון</label>
+            <input type="text" id="semeltax_level" value="0.44" class="w3-input">   
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="grosscur" value="grosscur" class="w3-check" checked />
+            <label for="grosscur">הסבר הפרשים מעל סכום מסוים בברוטו שוטף</label>  
+          </header>
+          <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="grosscur_level">רף עליון</label>
+            <input type="text" id="grosscur_level" value="2000,0.2" class="w3-input">  
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="grossretro" value="grossretro" class="w3-check" checked />
+            <label for="grossretro">הסבר הפרשים מעל סכום מסוים בברוטו הפרשים</label>  
+          </header>
+          <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="grossretro_level">רף עליון</label>
+            <input type="text" id="grossretro_level" value="2000,0.2" class="w3-input">  
+          </div>
+        </div>
+    </div>
+    <div class="w3-row-padding w3-section">
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="fundsdeduct" value="fundsdeduct" class="w3-check" checked />
+            <label for="fundsdeduct">שיעורי ניכויים מעל אחוז גבוה או פחות מאחוז נמוך</label>  
+          </header>
+          <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="fundsdeduct_level">רף עליון ותחתון</label>
+            <input type="text" id="fundsdeduct_level" value="0.15,0.03" class="w3-input">  
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel1313" value="semel1313" class="w3-check" checked />
+            <label for="semel1313">שעות נוכחות ללא שכר</label>  
+          </header>
+          <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semel1313_level">מינימום שעות</label>
+            <input type="text" id="semel1313_level" value="8.5" class="w3-input">  
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel131365" value="semel131365" class="w3-check" checked />
+            <label for="semel131365">כמות שעות עבודה גבוהה מאוד</label>  
+          </header>
+          <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semel131365_level">מינימום שעות</label>
+            <input type="text" id="semel131365_level" value="264" class="w3-input">  
+          </div>
+        </div>
+    </div>
+    <div class="w3-row-padding w3-section">
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semel94010" value="semel94010" class="w3-check" checked />
+            <label for="semel94010">ברוטו ביטוח לאומי מעל לתקרה</label>  
+          </header>
+          <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semel94010_level">תקרת ביטוח לאומי</label>
+            <input type="text" id="semel94010_level" value="47465" class="w3-input">  
+          </div>
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="semeltwice" value="semeltwice" class="w3-check" checked />
+            <label for="semeltwice">סמל שכר שמופיע יותר מפעם באותו תאריך ערך</label>  
+          </header>
+          <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <label for="semeltwice_level">מעל מספר מופעים</label>
+            <input type="text" id="semeltwice_level" value="1" class="w3-input">  
+          </div>
+        </div>
+    </div>
+
     
   </body>
 

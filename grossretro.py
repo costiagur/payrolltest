@@ -3,11 +3,12 @@ import pandas as pd
 
 def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
 
-    grouped = df.groupby(by = ["Empid","Elemtype","Refdate"],as_index=False,group_keys=True)
+    grouped = df.groupby(by = ["Empid","Empname","Elemtype","Refdate"],as_index=False,group_keys=True)
     groupdf = grouped.sum("CurAmount")
-    empids = set(df[df["Start date"] <= prevmonth]["Empid"])
+    empids = set(df[df["Startdate"] <= prevmonth]["Empid"])
     resdict = dict()
     resdict["Empid"] = []
+    resdict["Empname"] = []
     resdict["Elem"] = []
     resdict["Diff"] = []
     resdict["Values"] = []
@@ -25,19 +26,21 @@ def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
         if abs(grossretro) > cutoamount:
     
             resdict["Empid"].append(eachemp)
-            resdict["Elem"].append("RetroGross")
+            resdict["Empname"].append(groupdf.loc[groupdf["Empid"]== eachemp,"Empname"].unique()[0])
+            resdict["Elem"].append("ברוטו רטרו")
             resdict["Diff"].append(grossretro)
             resdict["Values"].append(0)      
 
 
             middf = df[(df["Empid"] == eachemp)&(df["Refdate"] < refmonth)&(df["Elemtype"] == "addition components")]
             
-            for eachsemel in middf[(middf["Elemtype"]== "addition components")&(middf["CurAmount"] != 0)]["Elem"].unique():
-                retroamount = sum(middf[middf["Elem"] == eachsemel]["CurAmount"])
+            for eachelem in middf[middf["CurAmount"] != 0]["Elem"].unique():
+                retroamount = middf.loc[middf["Elem"] == eachelem,"CurAmount"].sum()
                 
                 if abs(retroamount)/abs(grossretro) >= cutoff:
                     resdict["Empid"].append(eachemp)
-                    resdict["Elem"].append(eachsemel)
+                    resdict["Empname"].append(middf.loc[middf["Empid"]== eachemp,"Empname"].unique()[0])
+                    resdict["Element"].append(middf.loc[(middf["Empid"]== eachemp)&(middf["Elem"] == eachelem),"Elem_heb"].unique()[0])
                     resdict["Diff"].append(0)
                     resdict["Values"].append(retroamount)
                 #

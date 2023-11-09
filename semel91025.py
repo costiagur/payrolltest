@@ -7,7 +7,7 @@ def semel91025(df,xlwriter,refmonth,prevmonth,level="0.1"):
     filterout = set(df[df["mn"]==99]["Empid"].values)
     semels = ("90148","91203 - Value time","91025","119","5843","5842","1","2151","1039","30501")
 
-    middf = df[(df["Refdate"] == refmonth)&(df["Start date"] <= refmonth)&(~df["Empid"].isin(filterout))&(df["Division"] != 90)&(df["Elem"].isin(semels))&(~df["Rank"].isin((75,91)))]
+    middf = df[(df["Refdate"] == refmonth)&(df["Start date"] <= prevmonth)&(~df["Empid"].isin(filterout))&(df["Division"] != 90)&(df["Elem"].isin(semels))&(~df["Rank"].isin((75,91)))]
     idlist = set(middf["Empid"].values)
 
     resdict = dict()

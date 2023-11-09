@@ -3,16 +3,18 @@ import pandas as pd
 
 def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
     
-    grouped = df.groupby(by = ["Empid","Elemtype","Refdate"],as_index=False,group_keys=True)
+    grouped = df.groupby(by = ["Empid","Empname","Elemtype","Refdate"],as_index=False,group_keys=True)
     groupdf = grouped.sum(["PrevAmount","CurAmount"])
-    empids = set(df[df["Start date"] <= prevmonth]["Empid"])
+    empids = set(df[df["Startdate"] <= prevmonth]["Empid"])
     
-    annualelem = ["143","149","150","7143","7149","7150","4971","4972","2276","2278","290","291","295","1069","2151","4737","5831"]
-    unprorate = ["48","65","117","119","120","121","122","123","124","125","126","127","130","132","133","139","163","167","177","215","216","232","236","5258","5241","131","137","173","190","191","192","193","194","217","218","284","285","338","501","502","1311","1315","1365","1616","1367","1451","1922","5227"]
+    annualelem = ["2276","2278","290","291","295","2151","4737","5831"]
+    #annualelem - תשתלומים שנתיים. לא מעניינים לצורך בדיקה זו
     byreport = ["1","16","17","32","153","158","169","1056","100","1034","1039","4200","4500","4501","5127","5128","5234","5243","5244","5245","5403","5404","5405","5410","5411","5465","5466","5467","5840","5841","5842","5843"]
-    
+    #byreport - סמלים שצריך לדווח והם בבסיס הפנסיה ולכן תלויים בחלקיות משרה
+
     resdict = dict()
     resdict["Empid"] = []
+    resdict["Empname"] = []
     resdict["Elem"] = []
     resdict["Diff"] = []
     resdict["Values"] = []
@@ -40,18 +42,23 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
             prevbase = sum(middf[(middf["Refdate"] == prevmonth)&(middf["Elem"] == "91025")]["PrevAmount"])
             prevbase = prevbase - sum(middf[middf['Elem'].isin(("2151","290"))]["PrevAmount"])
 
+            empname = middf.loc[middf["Empid"]== eachemp,"Empname"].unique()[0]
+
             resdict["Empid"].append(eachemp)
-            resdict["Elem"].append("CurrGross")
+            resdict["Empname"].append(empname)
+            resdict["Elem"].append("הפרש ברוטו שוטף")
             resdict["Diff"].append(grossdiff)
             resdict["Values"].append(0)      
             
             resdict["Empid"].append(eachemp)
-            resdict["Elem"].append("prevrate")
+            resdict["Empname"].append(empname)
+            resdict["Elem"].append("חלקיות קודמת")
             resdict["Diff"].append(prevrate)
             resdict["Values"].append(0)
 
             resdict["Empid"].append(eachemp)
-            resdict["Elem"].append("currate")
+            resdict["Empname"].append(empname)
+            resdict["Elem"].append("חלקיות החודש")
             resdict["Diff"].append(currate)
             resdict["Values"].append(0)
 
@@ -65,19 +72,21 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
             
             if abs(rateadd)/abs(grossdiff) >= cutoff:       
                 resdict["Empid"].append(eachemp)
-                resdict["Elem"].append("91025")
+                resdict["Empname"].append(empname)
+                resdict["Elem"].append("91025 - בסיס הפנסיה")
                 resdict["Diff"].append(0)
                 resdict["Values"].append(round(rateadd,0))
             #
             
-            unproratedf = middf[middf["Elem"].isin(unprorate)]
+            unproratedf = middf[(~middf["Elem"].isin(byreport+annualelem))&(middf["Elemtype"] == "addition components")] #סמלים שאינם קשורים לבסיס הפנסיה
             
             for eachelem in unproratedf['Elem'].unique(): #not prorate
                 prevsum = sum(unproratedf[(unproratedf["Elem"] == eachelem)]["PrevAmount"])
                 currsum = sum(unproratedf[(unproratedf["Refdate"] == refmonth)&(unproratedf["Elem"] == eachelem)]["CurAmount"])
                 if abs(currsum-prevsum)/abs(grossdiff) >= cutoff:
                     resdict["Empid"].append(eachemp)
-                    resdict["Elem"].append(eachelem)
+                    resdict["Empname"].append(empname)
+                    resdict["Elem"].append(unproratedf.loc[(unproratedf["Empid"]== eachemp)&(unproratedf["Elem"] == eachelem),"Elem_heb"].unique()[0])
                     resdict["Diff"].append(0)
                     resdict["Values"].append(round(currsum-prevsum,0))
                 #
@@ -102,7 +111,8 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
                 
                 if abs(diffamount)/abs(grossdiff) >= cutoff:
                     resdict["Empid"].append(eachemp)
-                    resdict["Elem"].append(eachelem)
+                    resdict["Empname"].append(empname)
+                    resdict["Elem"].append(byreportdf.loc[(byreportdf["Empid"]== eachemp)&(byreportdf["Elem"] == eachelem),"Elem_heb"].unique()[0])
                     resdict["Diff"].append(0)
                     resdict["Values"].append(round(diffamount,0))
                 #

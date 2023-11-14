@@ -48,7 +48,7 @@ def myfunc(queryobj):
         
         df.rename(columns={"שם עובד":"Empname","מספר עובד":"Empid","מ.נ.":"mn","סכום":"PrevAmount","כמות":"PrevQuantity",df.columns[16]:"CurAmount",df.columns[17]:"CurQuantity","תאריך ערך":"Refdate","ת.ת. עבודה":"Startdate","סוג רכיב":"Elemtype_heb","שם רכיב":"Elem_heb","דרוג":"Dirug"},inplace=True)
 
-        df["Elem"] = df["Elem_heb"].str.extract(r'^(\d+)\s-')
+        df["Elem"] = df["Elem_heb"].str.extract(r'^(\d+|עלות)\s-*')
         df["Rank"] = df["Dirug"].str.extract('(\d+)')
 
         fromconv = ["מספר ותאור רכיבי תוספות","מספר ותאור רכיבי ניכויי חובה","מספר ותאור רכיבי ניכויי רשות","מספר ותאור רכיבי הפרשות","נתונים נוספים","מספר ותאור  רכיבי זקיפות הטבה"]
@@ -71,7 +71,21 @@ def myfunc(queryobj):
             df.loc[(df["Empid"] == i2)&(df["mn"] == i3)&(df["Refdate"] == refmonth)&(df["Elem"] == "1"),"CurQuantity"] =sum(df1313.loc[(df1313["Empid"] == i2)&(df1313["mn"] == i3),"Quantity"])
         #
 
-        xlwriter = pd.ExcelWriter("{}{}{}".format("drafts\\",refmonth.strftime("%Y-%m"),".xlsx"))
+        xlwriter = pd.ExcelWriter("{}{}{}".format(".\\drafts\\",refmonth.strftime("%Y-%m"),".xlsx"))
+        jsonfile = "{}{}{}".format(".\\jsondfs\\",refmonth.strftime("%Y-%m"),".json")
+
+        class dateEncoder(json.JSONEncoder):
+            def default(self, obj):
+                if isinstance(obj, datetime):
+                    return obj.strftime("%Y-%m-%d")
+                # Let the base class default method raise the TypeError
+                return json.JSONEncoder.default(self, obj)
+            #
+        #
+                                        
+        with open(jsonfile,mode="w") as fp:
+                json.dump(df.to_dict(orient='list'),fp,cls=dateEncoder)
+        #
 
         print(df.head(10))
 
@@ -137,12 +151,12 @@ def myfunc(queryobj):
         #    file64enc = base64.b64encode(filesdict['doc1'][1])
         #    file64dec = file64enc.decode()
             
-            with open("drafts\\"+ refmonth.strftime("%Y-%m") +".xlsx","rb") as f:
+            with open(".\\drafts\\"+ refmonth.strftime("%Y-%m") +".xlsx","rb") as f:
                 file64enc = base64.b64encode(f.read())
                 file64dec = file64enc.decode()
                 replymsg = json.dumps([f.name,file64dec]).encode('UTF-8')
             #
-            unlink("drafts\\"+ refmonth.strftime("%Y-%m") +".xlsx")
+            unlink(".\\drafts\\"+ refmonth.strftime("%Y-%m") +".xlsx")
         #
         else: #if filesdict is empty
             replymsg = json.dumps(["Error","No file provided"]).encode('UTF-8')

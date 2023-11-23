@@ -21,8 +21,8 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
 
     levellist = level.split(",")
 
-    cutoff = min([float(eachlevel) for eachlevel in levellist])
-    cutoamount = max([float(eachlevel) for eachlevel in levellist])
+    cutoffrate = min([float(eachlevel) for eachlevel in levellist])
+    cutoffamount = max([float(eachlevel) for eachlevel in levellist])
 
     for eachemp in empids:
         grosscurr = sum(groupdf[(groupdf["Empid"] == eachemp)&(groupdf["Elemtype"] == "addition components")&(groupdf["Refdate"] == refmonth)]["CurAmount"])
@@ -33,7 +33,7 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
         grossdiff = grosscurr - grossprev
         grossdiff = round(grossdiff,0)
         
-        if abs(grossdiff) > cutoamount:
+        if abs(grossdiff) > cutoffamount:
             
             middf = df[(df["Empid"] == eachemp)&(df["Refdate"] >= prevmonth)]
             
@@ -70,7 +70,7 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
                 rateadd = prevbase * (currate / prevrate - 1)
             #
             
-            if abs(rateadd)/abs(grossdiff) >= cutoff:       
+            if abs(rateadd)/abs(grossdiff) >= cutoffrate:       
                 resdict["Empid"].append(eachemp)
                 resdict["Empname"].append(empname)
                 resdict["Elem"].append("91025 - בסיס הפנסיה")
@@ -83,7 +83,7 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
             for eachelem in unproratedf['Elem'].unique(): #not prorate
                 prevsum = sum(unproratedf[(unproratedf["Elem"] == eachelem)]["PrevAmount"])
                 currsum = sum(unproratedf[(unproratedf["Refdate"] == refmonth)&(unproratedf["Elem"] == eachelem)]["CurAmount"])
-                if abs(currsum-prevsum)/abs(grossdiff) >= cutoff:
+                if abs(currsum-prevsum)/abs(grossdiff) >= cutoffrate:
                     resdict["Empid"].append(eachemp)
                     resdict["Empname"].append(empname)
                     resdict["Elem"].append(unproratedf.loc[(unproratedf["Empid"]== eachemp)&(unproratedf["Elem"] == eachelem),"Elem_heb"].unique()[0])
@@ -109,15 +109,14 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
                     diffamount = currsum - prevsum * (currate / prevrate)
                 #            
                 
-                if abs(diffamount)/abs(grossdiff) >= cutoff:
+                if abs(diffamount)/abs(grossdiff) >= cutoffrate:
                     resdict["Empid"].append(eachemp)
                     resdict["Empname"].append(empname)
                     resdict["Elem"].append(byreportdf.loc[(byreportdf["Empid"]== eachemp)&(byreportdf["Elem"] == eachelem),"Elem_heb"].unique()[0])
                     resdict["Diff"].append(0)
                     resdict["Values"].append(round(diffamount,0))
                 #
-            #
-            
+            #      
         #
     #
     resdf = pd.DataFrame.from_dict(resdict)
@@ -126,5 +125,5 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
 
     resdf.head(10)
 
-    return [len(resdf["Empid"].unique()),"grosscur"]
+    return [len(resdf["Empid"].unique()),"grosscur",resdict]
 #

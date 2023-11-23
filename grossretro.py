@@ -5,7 +5,7 @@ def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
 
     grouped = df.groupby(by = ["Empid","Empname","Elemtype","Refdate"],as_index=False,group_keys=True)
     groupdf = grouped.sum("CurAmount")
-    empids = set(df[df["Startdate"] <= prevmonth]["Empid"])
+    empids = df[df["Startdate"] <= prevmonth]["Empid"].unique()
     resdict = dict()
     resdict["Empid"] = []
     resdict["Empname"] = []
@@ -15,18 +15,20 @@ def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
    
     levellist = level.split(",")
 
-    cutoff = min([float(eachlevel) for eachlevel in levellist])
-    cutoamount = max([float(eachlevel) for eachlevel in levellist])
+    cutoffrate = min([float(eachlevel) for eachlevel in levellist])
+    cutoffamount = max([float(eachlevel) for eachlevel in levellist])
 
     for eachemp in empids:
         grossretro = sum(groupdf[(groupdf["Empid"] == eachemp)&(groupdf["Elemtype"] == "addition components")&(groupdf["Refdate"] < refmonth)]["CurAmount"])
         
         grossretro = round(grossretro,0)
         
-        if abs(grossretro) > cutoamount:
+        if abs(grossretro) > cutoffamount:
     
+            empname = groupdf.loc[groupdf["Empid"]== eachemp,"Empname"].unique()[0]
+
             resdict["Empid"].append(eachemp)
-            resdict["Empname"].append(groupdf.loc[groupdf["Empid"]== eachemp,"Empname"].unique()[0])
+            resdict["Empname"].append(empname)
             resdict["Elem"].append("ברוטו רטרו")
             resdict["Diff"].append(grossretro)
             resdict["Values"].append(0)      
@@ -37,10 +39,10 @@ def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
             for eachelem in middf[middf["CurAmount"] != 0]["Elem"].unique():
                 retroamount = middf.loc[middf["Elem"] == eachelem,"CurAmount"].sum()
                 
-                if abs(retroamount)/abs(grossretro) >= cutoff:
+                if abs(retroamount)/abs(grossretro) >= cutoffrate:
                     resdict["Empid"].append(eachemp)
-                    resdict["Empname"].append(middf.loc[middf["Empid"]== eachemp,"Empname"].unique()[0])
-                    resdict["Element"].append(middf.loc[(middf["Empid"]== eachemp)&(middf["Elem"] == eachelem),"Elem_heb"].unique()[0])
+                    resdict["Empname"].append(empname)
+                    resdict["Elem"].append(middf.loc[(middf["Empid"]== eachemp)&(middf["Elem"] == eachelem),"Elem_heb"].unique()[0])
                     resdict["Diff"].append(0)
                     resdict["Values"].append(retroamount)
                 #

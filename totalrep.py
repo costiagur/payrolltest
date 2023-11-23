@@ -11,16 +11,16 @@ def totalrep(df,xlwriter,refmonth,prevmonth):
     df["NetCur"] =  df["CurAmount"] * (df["Elem"] == "91096")
 
     groupdf = df.groupby(by = ["Empname","Empid","Elemtype"],as_index=False,group_keys=True).sum(["CurofCur","RetrofCur","CurofPrev","NetCur"])
-    groupdf.drop(columns=["mn","וותק","אגף","מחלקה","PrevQuantity","CurQuantity"],inplace=True)
+    groupdf.drop(columns=["mn","וותק","Division","מחלקה","PrevQuantity","CurQuantity"],inplace=True)
     groupdf["CurrDiff"] = (groupdf["CurofCur"] -  groupdf["CurofPrev"])
 
     Annualdf = df[df["Elem"].isin(("2276","2278","290","291","295","2151","4737"))] 
     Vehdf =  df[df["Elem"].isin(("143","149","150","7143","7149","7150","4971","4972"))]
 
     grpAnnualdf = Annualdf.groupby(by= "Empid",as_index=False,group_keys=True).sum(["CurofCur","CurofPrev"])
-    grpAnnualdf.drop(columns=["mn","וותק","אגף","מחלקה","PrevQuantity","CurQuantity"],inplace=True)
+    grpAnnualdf.drop(columns=["mn","וותק","Division","מחלקה","PrevQuantity","CurQuantity"],inplace=True)
     grpVehdf = Vehdf.groupby(by= "Empid",as_index=False,group_keys=True).sum(["CurofCur","CurofPrev"])
-    grpVehdf.drop(columns=["mn","וותק","אגף","מחלקה","PrevQuantity","CurQuantity"],inplace=True)
+    grpVehdf.drop(columns=["mn","וותק","Division","מחלקה","PrevQuantity","CurQuantity"],inplace=True)
 
     resdict = {}
     resdict["Empid"] = []
@@ -60,5 +60,7 @@ def totalrep(df,xlwriter,refmonth,prevmonth):
     resdf.head(10)
 
     resdf.to_excel(xlwriter,sheet_name="Total",index=False)
+
+    return resdict
 
 #

@@ -8,19 +8,20 @@ def semel6666(df,xlwriter,refmonth,prevmonth,level="0"):
     
     resdict = dict()
     resdict["Empid"] = []
-    resdict["Elem"] = []
+    resdict["Empname"] = []
+    resdict["Elem_heb"] = []
     resdict["CurAmount"] = []
 
 
     for eachid in middf["Empid"].unique():
         
         if middf.loc[(middf["Empid"] == eachid),"CurAmount"].sum() != 0:
-            for eachelem in middf.loc[middf["Empid"] == eachid,"Elem"]:
-                resdict["Empid"].append(eachid)
-                resdict["Elem"].append(eachelem)
-                resdict["CurAmount"].append(sum(middf.loc[(middf["Empid"] == eachid)&(middf["Elem"] == eachelem),"CurAmount"].sum()))
+            resdict["Empid"] = resdict["Empid"] + middf.loc[(middf["Empid"] == eachid),"Empid"].to_list()
+            resdict["Empname"] = resdict["Empname"] + middf.loc[(middf["Empid"] == eachid),"Empname"].to_list()
+            resdict["Elem_heb"] = resdict["Elem_heb"] + middf.loc[(middf["Empid"] == eachid),"Elem_heb"].to_list()
+            resdict["CurAmount"] = resdict["CurAmount"] + middf.loc[(middf["Empid"] == eachid),"CurAmount"].to_list()
         #
-   
+    #
     
     resdf = pd.DataFrame.from_dict(resdict)
     resdf.to_excel(xlwriter,sheet_name="6666_6667",index=False)

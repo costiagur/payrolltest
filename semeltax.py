@@ -9,38 +9,37 @@ def semeltax(df,xlwriter,refmonth,prevmonth,level="0.44"):
 
     resdict = dict()
     resdict["Empid"] = []
+    resdict["Empname"] = []
     resdict["Gross"] = []
-    resdict["semel"] = []
-    resdict["Value"] = []
+    resdict["Elem_heb"] = []
+    resdict["CurAmount"] = []
     resdict["Ratio"] = []
 
-    grouped = df.groupby(by = ["Empid","Elemtype"],as_index=False,group_keys=True)["CurAmount"]
-    middf = grouped.sum("CurAmount")
+    middf = df.groupby(by = ["Empid","Elemtype"],as_index=False,group_keys=True).sum("CurAmount")
 
     for eachemp in emps:
         
-        gross = sum(middf[(middf["Empid"] == eachemp)&(middf["Elemtype"].isin(["addition components","benefit charge components"]))]["CurAmount"])
+        gross = sum(middf.loc[(middf["Empid"] == eachemp)&(middf["Elemtype"].isin(["addition components","benefit charge components"])),["CurAmount"]].sum())
         
+
         if gross == 0:
             continue
         #
         
-        tax = sum(middf[(middf["Empid"] == eachemp)&(middf["Elemtype"] == "compulsory deductions")]["CurAmount"])
+        tax = middf.loc[(middf["Empid"] == eachemp)&(middf["Elemtype"] == "compulsory deductions"),"CurAmount"].sum()
         
         taxrate = tax / gross
         
         if taxrate > level:
-            elems = set(df[(df["Empid"] == eachemp)&(df["Elemtype"] == "compulsory deductions")]["Elem"])
-            
-            for eachelem in elems:
-                elemval = sum(df[(df["Empid"] == eachemp)&(df["Elem"] == eachelem)]["CurAmount"])
-                
-                resdict["Empid"].append(eachemp)
-                resdict["Gross"].append(gross)
-                resdict["semel"].append(eachelem)
-                resdict["Value"].append(elemval)
-                resdict["Ratio"].append(elemval / gross)
-            #
+            eachiddf = df[(df["Empid"] == eachemp)&(df["Elemtype"] == "compulsory deductions")][["Empid","Empname","Elem_heb","CurAmount"]]
+            eachidroupdf = eachiddf.groupby(by=["Empid","Empname","Elem_heb"],as_index=False,group_keys=True).sum("CurAmount")
+
+            resdict["Empid"] = resdict["Empid"] + eachidroupdf["Empid"].to_list()
+            resdict["Empname"] = resdict["Empname"] +eachidroupdf["Empname"].to_list()
+            resdict["Gross"] = resdict["Gross"] + [gross]*eachidroupdf["Elem_heb"].count()
+            resdict["Elem_heb"] = resdict["Elem_heb"] + eachidroupdf["Elem_heb"].to_list()
+            resdict["CurAmount"] = resdict["CurAmount"] + eachidroupdf["CurAmount"].to_list()
+            resdict["Ratio"] = resdict["Ratio"] + [eachval/gross for eachval in eachidroupdf["CurAmount"].to_list()]
         #
     #
 

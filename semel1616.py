@@ -15,7 +15,7 @@ def semel1616(df,xlwriter,refmonth,prevmonth,level="0"):
         #
     #
 
-    resdf = middf[middf["Empid"].isin(set(resid))]
+    resdf = df[(df["Empid"].isin(set(resid)))&(df["Elem"].isin(('1','100','1616')))][["Empid","Empname","mn","Elem_heb","CurAmount","CurQuantity"]]
     resdf.to_excel(xlwriter,sheet_name="1616_no_work",index=False)
     
     return len(resdf)

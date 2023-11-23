@@ -51,6 +51,27 @@ myfunc.submit = function(){ //request can be insert or update
 
     xhr.send(fdata);     
 }
+//********************************************************************************************* */
+myfunc.removechecks = function(){
+    if (document.getElementById("remchecks").dataset.removecheck == "0"){
+        document.getElementById("remchecks").dataset.removecheck = "1"
+        for (eachsemel of document.querySelectorAll("input[type =checkbox]")){
+            if (eachsemel.checked == true){
+                eachsemel.checked = false
+            }
+        }   
+    }
+    else{
+        document.getElementById("remchecks").dataset.removecheck = "0"
+        for (eachsemel of document.querySelectorAll("input[type =checkbox]")){
+            if (eachsemel.checked == false){
+                eachsemel.checked = true
+            }
+        }           
+    }
+
+
+}
 
 
 //********************************************************************************************* */

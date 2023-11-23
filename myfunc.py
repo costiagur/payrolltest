@@ -8,6 +8,7 @@ from datetime import timedelta
 from io import BytesIO
 from os import unlink
 import concurrent.futures
+from totalrep import totalrep
 from semel1616 import semel1616
 from semel90148 import semel90148
 from semel91025 import semel91025
@@ -25,6 +26,7 @@ from semel1313 import semel1313
 from semel131365 import semel131365
 from semel94010 import semel94010
 from semeltwice import semeltwice
+from before9months import before9months
 
 CODESTR = "hazuticheck"
 
@@ -40,14 +42,22 @@ def myfunc(queryobj):
         buff = BytesIO(filesdict['hazuti'][1])
 
         cols = list(range(5,21,1))
-        cols.append(3)
-        cols.remove(12)
-        cols.remove(13)
-        cols.remove(14)
-        df = pd.read_csv(buff,sep='\t',header=3,encoding="cp1255",na_filter=True,skip_blank_lines=True,skiprows=[5],usecols=cols,parse_dates=['Reference date','Start date'],dayfirst=True)
-        df.dropna(axis=0,subset=['Amount','Quantity','Amount.1','Quantity.1'],inplace=True)
-        df.rename(columns={"Employee #":"Empid","M.N.":"mn","Type of component":"Elemtype","Name of component":"Elem","Amount":"PrevAmount","Quantity":"PrevQuantity","Amount.1":"CurAmount","Quantity.1":"CurQuantity","Reference date":"Refdate"},inplace=True)
-        df["Rank"] = df["Rank"].str.extract('(\d+)')
+        cols = cols + [2,3]
+       
+        df = pd.read_csv(buff,sep='\t',header=3,encoding="cp1255",na_filter=True,skip_blank_lines=True,skiprows=[5],usecols=cols,parse_dates=['תאריך ערך','ת.ת. עבודה'],dayfirst=True)
+        
+        df.rename(columns={"שם עובד":"Empname","מספר עובד":"Empid","מ.נ.":"mn","אגף":"Division","סכום":"PrevAmount","כמות":"PrevQuantity",df.columns[16]:"CurAmount",df.columns[17]:"CurQuantity","תאריך ערך":"Refdate","ת.ת. עבודה":"Startdate","סוג רכיב":"Elemtype_heb","שם רכיב":"Elem_heb","דרוג":"Dirug"},inplace=True)
+
+        df["Elem"] = df["Elem_heb"].str.extract(r'^(\d+|עלות)\s-*')
+        df["Rank"] = df["Dirug"].str.extract('(\d+)')
+
+        fromconv = ["מספר ותאור רכיבי תוספות","מספר ותאור רכיבי ניכויי חובה","מספר ותאור רכיבי ניכויי רשות","מספר ותאור רכיבי הפרשות","נתונים נוספים","מספר ותאור  רכיבי זקיפות הטבה"]
+        toconv = ["addition components","compulsory deductions","voluntary deductions","provision components","additional data","benefit charge components"]
+
+        df["Elemtype"] = df["Elemtype_heb"]
+        df["Elemtype"].replace(to_replace = fromconv, value=toconv,inplace=True)
+
+        df.dropna(axis=0,subset=['PrevAmount','PrevQuantity','CurAmount','CurQuantity'],inplace=True)
         
         refmonth = df["Refdate"].max()
         prevmonth = refmonth.replace(year = refmonth.year -1) if refmonth.month == 12 else refmonth.replace(month=refmonth.month-1)
@@ -56,13 +66,15 @@ def myfunc(queryobj):
 
         df1313 = pd.read_csv(buff,sep='\t',header=0,encoding="cp1255",na_filter=True,skip_blank_lines=True,parse_dates=['תוקף עד','תוקף מ'],dayfirst=True,usecols=list(range(0,6,1)))
         df1313.rename(columns={"מספר זהות ":"Empid","שם עובד":"Empname","מ.נ":"mn","תוקף מ":"Refdate","תוקף עד":"Enddate","כמות":"Quantity"}, inplace=True)
+        
         for _,i2,i3 in list(df1313[["Empid","mn"]].to_records()):
             df.loc[(df["Empid"] == i2)&(df["mn"] == i3)&(df["Refdate"] == refmonth)&(df["Elem"] == "1"),"CurQuantity"] =sum(df1313.loc[(df1313["Empid"] == i2)&(df1313["mn"] == i3),"Quantity"])
         #
 
-        xlwriter = pd.ExcelWriter("{}{}{}".format("drafts\\",refmonth.strftime("%Y-%m"),".xlsx"))
-
         print(df.head(10))
+
+        xlwriter = pd.ExcelWriter(".\\drafts\\" + refmonth.strftime("%Y-%m") + ".xlsx")
+        
 
         infoobj = common.infopopup() #common.root
        
@@ -84,10 +96,13 @@ def myfunc(queryobj):
         checkpool["semel1313"] = [semel1313,"מספר עובדים שיש נוכחות אך אין שכר יסוד - {}"]
         checkpool["semel131365"] = [semel131365,"מספר עובדים עם כמות שעות גבוהה מדי - {}"]
         checkpool["semel94010"] = [semel94010,"מספר עובדים עם ברוטו ביטוח לאומי מעל לתקרה - {}"]
-        checkpool["semeltwice"] = [semeltwice,"סמל שמופיע מספר פעמים באותו תאריך ערך - {}"]
+        #checkpool["semeltwice"] = [semeltwice,"סמל שמופיע מספר פעמים באותו תאריך ערך - {}"]
+        checkpool["before9months"] = [before9months,"מספר עובדים עם ממשק שלילי להפרשות או ניכויים בדיעבד מעל לתשעה חודשים - {}"]
 
         pool = concurrent.futures.ThreadPoolExecutor(max_workers=3)   
         heavyprocess = []
+        resdict = {}
+        resdict = totalrep(df,xlwriter,refmonth,prevmonth)
 
         for reqestcheck in requestlist:
             if reqestcheck in ["semel91025","grosscur", "grossretro"]:
@@ -106,6 +121,9 @@ def myfunc(queryobj):
         for hp in concurrent.futures.as_completed(heavyprocess):
              res = hp.result()
              infoobj.show(checkpool[res[1]][1].format(res[0]))
+
+             if res[1] == "grosscur":
+                  pass
         #
 
         pool.shutdown(wait=True)
@@ -119,17 +137,18 @@ def myfunc(queryobj):
         # reply message should be encoded to be sent back to browser ----------------------------------------------
         # encoding to base64 is used to send ansi hebrew data. it is decoded to become string and put into json.
         # json is encoded to be sent to browser.
-
-        if bool(filesdict):
         #    file64enc = base64.b64encode(filesdict['doc1'][1])
         #    file64dec = file64enc.decode()
-            
-            with open("drafts\\"+ refmonth.strftime("%Y-%m") +".xlsx","rb") as f:
+        
+        if bool(filesdict):
+                    
+            with open(".\\drafts\\"+ refmonth.strftime("%Y-%m") +".xlsx","rb") as f:
                 file64enc = base64.b64encode(f.read())
                 file64dec = file64enc.decode()
                 replymsg = json.dumps([f.name,file64dec]).encode('UTF-8')
             #
-            unlink("drafts\\"+ refmonth.strftime("%Y-%m") +".xlsx")
+            
+            unlink(".\\drafts\\"+ refmonth.strftime("%Y-%m") +".xlsx")
         #
         else: #if filesdict is empty
             replymsg = json.dumps(["Error","No file provided"]).encode('UTF-8')

@@ -37,15 +37,15 @@
     <div id="loader" class="loader" style="display: none;"></div> <!--circle displayed while working-->
 
       <div class="w3-row-padding w3-section">
-        <div class="w3-quarter w3-card-4 marginright w3-padding-small">
+        <div class="w3-quarter w3-card-4 w3-padding-small">
           <div>
-            דוח חזותי, אנגלית, מפורט לפי תאריכי ערך, לשני חודשים
+            דוח חזותי, מפורט לפי תאריכי ערך, לשני חודשים
           </div>
           <div>
             <input type="file" id="hazuti" class="w3-input" placeholder="קובץ XLS">
           </div>  
         </div>
-      <div class="w3-quarter w3-card-4 marginright w3-padding-small">
+      <div class="w3-quarter w3-card-4  w3-padding-small">
         <div>
           פלט 1313, חודש שוטף
         </div>
@@ -53,12 +53,13 @@
           <input type="file" id="f1313" class="w3-input" placeholder="קובץ XLS">
         </div>
       </div>
-      <div class="w3-quarter w3-card-4 marginright w3-padding-small">
+      <div class="w3-quarter w3-card-4 w3-padding-small">
         <div>
           הרצת בדיקה
-          <input type="button" class="w3-button w3-border w3-round" value="Run" onclick="myfunc.submit()">
+          <input type="button" class="w3-button w3-border w3-round" value="הרצה" onclick="myfunc.submit()">
+          להסיר\להחזיר כל דגלים
+          <input type="button" id="remchecks" class="w3-button w3-border w3-round" value="בחירה\הסרה" onclick="myfunc.removechecks()" data-removecheck="0">
         </div>
-        <div><br></div>
       </div>
     </div>
           
@@ -231,6 +232,7 @@
             <input type="text" id="semel94010_level" value="47465" class="w3-input">  
           </div>
         </div>
+<!---
         <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
           <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
             <input type="checkbox" id="semeltwice" value="semeltwice" class="w3-check" checked />
@@ -239,6 +241,17 @@
           <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
             <label for="semeltwice_level">מעל מספר מופעים</label>
             <input type="text" id="semeltwice_level" value="1" class="w3-input">  
+          </div>
+        </div>
+-->
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="before9months" value="before9months" class="w3-check" checked />
+            <label for="semeltwice">ממשק שלילי הפרשות או ניכויים לקופות בדיעבד מעל 9 חודשים</label>  
+          </header>
+          <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
+            <label for="before9months_level">מעל מספר מופעים</label>
+            <input type="text" id="before9months_level" value="" class="w3-input">  
           </div>
         </div>
     </div>

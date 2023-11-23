@@ -14,7 +14,7 @@ def semel131365(df,xlwriter,refmonth,prevmonth,level="264"):
         #
     #
     
-    resdf = middf[(middf["Empid"].isin(emplist))&(middf["Elem"].isin(("1","65")))]
+    resdf = middf[(middf["Empid"].isin(emplist))&(middf["Elem"].isin(("1","65")))][["Empid","Empname","mn","Elem_heb","CurQuantity"]]
     resdf.to_excel(xlwriter,sheet_name="manyhours",index=False)
     
     return len(emplist)

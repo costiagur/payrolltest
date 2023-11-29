@@ -1,7 +1,8 @@
     #הפרשי ברוטו ברטרו
 import pandas as pd
+import numpy as np
 
-def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
+def grossretro(df,xlwriter,refmonth,prevmonth,level="5000,0.2"):
 
     grouped = df.groupby(by = ["Empid","Empname","Elemtype","Refdate"],as_index=False,group_keys=True)
     groupdf = grouped.sum("CurAmount")
@@ -11,7 +12,7 @@ def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
     resdict["Empname"] = []
     resdict["Elem"] = []
     resdict["Diff"] = []
-    resdict["Values"] = []
+    resdict["Amount"] = []
    
     levellist = level.split(",")
 
@@ -31,7 +32,7 @@ def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
             resdict["Empname"].append(empname)
             resdict["Elem"].append("ברוטו רטרו")
             resdict["Diff"].append(grossretro)
-            resdict["Values"].append(0)      
+            resdict["Amount"].append(0)      
 
 
             middf = df[(df["Empid"] == eachemp)&(df["Refdate"] < refmonth)&(df["Elemtype"] == "addition components")]
@@ -44,7 +45,7 @@ def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
                     resdict["Empname"].append(empname)
                     resdict["Elem"].append(middf.loc[(middf["Empid"]== eachemp)&(middf["Elem"] == eachelem),"Elem_heb"].unique()[0])
                     resdict["Diff"].append(0)
-                    resdict["Values"].append(retroamount)
+                    resdict["Amount"].append(round(retroamount,0))
                 #
                         
             #
@@ -55,6 +56,11 @@ def grossretro(df,xlwriter,refmonth,prevmonth,level="2000,0.2"):
 
     resdf.to_excel(xlwriter,sheet_name="grossretro",index=False)
 
-    resdf.head(10)
+    jsdict = {}
+    
+    for eachid in resdf["Empid"].unique():
+        jsdict[eachid] = {}
+        jsdict[eachid] = resdf.loc[resdf["Empid"] == eachid,["Elem","Diff","Amount"]].to_dict('records')
+    #
 
-    return [len(resdf["Empid"].unique()),"grossretro"]
+    return [len(resdf["Empid"].unique()),"grossretro",jsdict]

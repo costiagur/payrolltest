@@ -32,6 +32,8 @@ def totalrep(df,xlwriter,refmonth,prevmonth):
     resdict["VoluntaryDeduct"] = []
     resdict["PrevCurrGross"] = []
     resdict["CurrDiffGross"] = []
+    resdict["Annual"] = []
+    resdict["Vehicle"] = []
     resdict["UnexplainedDiff"] = []
 
     for eachid in groupdf["Empid"].unique():
@@ -48,19 +50,34 @@ def totalrep(df,xlwriter,refmonth,prevmonth):
     
         resdict["CurrDiffGross"].append(currdiff)
     
-        vehdiff = grpAnnualdf.loc[grpAnnualdf["Empid"] == eachid,"CurofCur"].sum()-grpAnnualdf.loc[grpAnnualdf["Empid"] == eachid,"CurofPrev"].sum()
-        annualdiff = grpVehdf.loc[grpVehdf["Empid"] == eachid,"CurofCur"].sum()-grpVehdf.loc[grpVehdf["Empid"] == eachid,"CurofPrev"].sum()
-    
+        annualdiff = grpAnnualdf.loc[grpAnnualdf["Empid"] == eachid,"CurofCur"].sum()-grpAnnualdf.loc[grpAnnualdf["Empid"] == eachid,"CurofPrev"].sum()
+        vehdiff = grpVehdf.loc[grpVehdf["Empid"] == eachid,"CurofCur"].sum()-grpVehdf.loc[grpVehdf["Empid"] == eachid,"CurofPrev"].sum()
+        
+        resdict["Annual"].append(annualdiff)
+        resdict["Vehicle"].append(vehdiff)
+        
         resdict["UnexplainedDiff"].append(currdiff - vehdiff - annualdiff)
     #
 
 
     resdf = pd.DataFrame.from_dict(resdict)
+    resdf.sort_values(by=['Net'], ascending=False, inplace=True)
 
-    resdf.head(10)
+    resdict = resdf.to_dict('records')
+
+    print(resdict)
+
+    jsdict = {}
+    
+    for eachrecord in resdict:
+        empid = eachrecord["Empid"]
+        eachrecord.pop("Empid")
+        jsdict[empid] = eachrecord
+    #
+
 
     resdf.to_excel(xlwriter,sheet_name="Total",index=False)
 
-    return resdict
+    return jsdict
 
 #

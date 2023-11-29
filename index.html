@@ -29,13 +29,23 @@
       .nonvisible {
         visibility: hidden;
       }
+      .nondisplayed {
+        display:none
+      }
     </style>
   
   </head>
 
-  <body dir="rtl" data-codeword="hazuticheck" class="w3-sand">
-    <div id="loader" class="loader" style="display: none;"></div> <!--circle displayed while working-->
+<body dir="rtl" data-codeword="hazuticheck">
+  <div id="loader" class="loader" style="display: none;"></div> <!--circle displayed while working-->
 
+  <div class="w3-bar w3-border w3-light-grey">
+    <a href="#" class="w3-bar-item w3-button w3-text-teal"  onclick="myfunc.switchtabs('salary')" id="barsalary">בקרות שכר</a>
+    <a href="#" class="w3-bar-item w3-button" onclick="myfunc.switchtabs('funds')" id="barfunds">בקרות קופות רטרו</a>
+    <a href="#" class="w3-bar-item w3-button" onclick="myfunc.switchtabs('report')" id="barreport">דוח ריכוז נתונים</a>
+  </div>
+
+  <div id="salary" class="switcher w3-sand">
       <div class="w3-row-padding w3-section">
         <div class="w3-quarter w3-card-4 w3-padding-small">
           <div>
@@ -185,7 +195,7 @@
           </header>
           <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
             <label for="grossretro_level">רף עליון</label>
-            <input type="text" id="grossretro_level" value="2000,0.2" class="w3-input">  
+            <input type="text" id="grossretro_level" value="5000,0.2" class="w3-input">  
           </div>
         </div>
     </div>
@@ -255,7 +265,31 @@
           </div>
         </div>
     </div>
+  </div>
+  
+  <div id="funds" class="switcher w3-sand nondisplayed">
+    <div class="w3-row-padding w3-section">
+      <div class="w3-quarter w3-card-4 w3-padding-small">
+        <div>
+            דוח מסלקה 2016
+        </div>
+        <div>
+          <input type="file" id="fundsfile" class="w3-input" placeholder="קובץ CSV">
+        </div>  
+      </div>
+    <div class="w3-quarter w3-card-4 w3-padding-small">
+      <div>
+        הרצת בדיקה
+        <input type="button" class="w3-button w3-border w3-round" value="הרצה" onclick="myfunc.submitfunds()">
+      </div>
+    </div>
+    </div>
+  </div>
 
+  <div id="report" class="switcher nondisplayed">
+    <h2>ריכוז ניתוח נתונים</h2>
+    <table id="reptb" class="w3-table-all w3-hoverable w3-card-4"></table>
+  </div>
     
   </body>
 

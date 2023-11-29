@@ -17,7 +17,7 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
     resdict["Empname"] = []
     resdict["Elem"] = []
     resdict["Diff"] = []
-    resdict["Values"] = []
+    resdict["Amount"] = []
 
     levellist = level.split(",")
 
@@ -48,19 +48,19 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
             resdict["Empname"].append(empname)
             resdict["Elem"].append("הפרש ברוטו שוטף")
             resdict["Diff"].append(grossdiff)
-            resdict["Values"].append(0)      
+            resdict["Amount"].append(0)      
             
             resdict["Empid"].append(eachemp)
             resdict["Empname"].append(empname)
             resdict["Elem"].append("חלקיות קודמת")
             resdict["Diff"].append(prevrate)
-            resdict["Values"].append(0)
+            resdict["Amount"].append(0)
 
             resdict["Empid"].append(eachemp)
             resdict["Empname"].append(empname)
             resdict["Elem"].append("חלקיות החודש")
             resdict["Diff"].append(currate)
-            resdict["Values"].append(0)
+            resdict["Amount"].append(0)
 
             if prevrate == 0 and currate != 0:
                 rateadd = prevbase
@@ -75,7 +75,7 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
                 resdict["Empname"].append(empname)
                 resdict["Elem"].append("91025 - בסיס הפנסיה")
                 resdict["Diff"].append(0)
-                resdict["Values"].append(round(rateadd,0))
+                resdict["Amount"].append(round(rateadd,0))
             #
             
             unproratedf = middf[(~middf["Elem"].isin(byreport+annualelem))&(middf["Elemtype"] == "addition components")] #סמלים שאינם קשורים לבסיס הפנסיה
@@ -88,7 +88,7 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
                     resdict["Empname"].append(empname)
                     resdict["Elem"].append(unproratedf.loc[(unproratedf["Empid"]== eachemp)&(unproratedf["Elem"] == eachelem),"Elem_heb"].unique()[0])
                     resdict["Diff"].append(0)
-                    resdict["Values"].append(round(currsum-prevsum,0))
+                    resdict["Amount"].append(round(currsum-prevsum,0))
                 #
             #
 
@@ -114,7 +114,7 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
                     resdict["Empname"].append(empname)
                     resdict["Elem"].append(byreportdf.loc[(byreportdf["Empid"]== eachemp)&(byreportdf["Elem"] == eachelem),"Elem_heb"].unique()[0])
                     resdict["Diff"].append(0)
-                    resdict["Values"].append(round(diffamount,0))
+                    resdict["Amount"].append(round(diffamount,0))
                 #
             #      
         #
@@ -123,7 +123,12 @@ def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
 
     resdf.to_excel(xlwriter,sheet_name="currgross_diff",index=False)
 
-    resdf.head(10)
+    jsdict = {}
 
-    return [len(resdf["Empid"].unique()),"grosscur",resdict]
+    for eachid in resdf["Empid"].unique():
+        jsdict[eachid] = {}
+        jsdict[eachid] = resdf.loc[resdf["Empid"] == eachid,["Elem","Diff","Amount"]].to_dict('records')
+    #
+
+    return [len(resdf["Empid"].unique()),"grosscur",jsdict]
 #

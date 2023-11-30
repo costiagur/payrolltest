@@ -46,15 +46,9 @@ myfunc.submit = function(){ //request can be insert or update
                 myfunc.download(resobj[0],resobj[1])
                 reptb = document.getElementById("reptb")
 
-                function addcell(tr,txt){
-                    td = tr.insertCell(-1);
-                    tdtxt = document.createTextNode(txt);
-                    td.appendChild(tdtxt);
-                }
-
-                thead = "<thead><tr><th>מספר עובד</th><th>שם עובד</th><th>נטו</th><th>ברוטו שוטף</th><th>ברוטו הפרשים</th><th>ניכויי חובה</th>";
-                thead += "<th>ניכויי זכות</th><th>ב.שוטף חודש קודם</th><th>הפרש ברוטו</th><th>הפ. חד שנתיים</th><th>הפרש רכב</th><th>הפרש לא מוסבר</th><th>פרוט הפ. ברוטו שוטף</th>"
-                thead += "<th>פרוט הפ. ברוטו רטרו</th></tr></thead>"
+                thead = "<thead id='repthead'><tr><th>מספר עובד</th><th>שם עובד</th><th onclick='myfunc.sort(this)'>נטו</th><th onclick='myfunc.sort(this)'>ברוטו שוטף</th><th onclick='myfunc.sort(this)'>ברוטו הפרשים</th><th onclick='myfunc.sort(this)'>ניכויי חובה</th>";
+                thead += "<th onclick='myfunc.sort(this)'>ניכויי זכות</th><th onclick='myfunc.sort(this)'>ב.שוטף חודש קודם</th><th onclick='myfunc.sort(this)'>הפרש ברוטו</th><th onclick='myfunc.sort(this)'>הפ. חד שנתיים</th><th onclick='myfunc.sort(this)'>הפרש רכב</th><th onclick='myfunc.sort(this)'>הפרש לא מוסבר</th>"
+                thead += "<th>פרוט הפ. ברוטו שוטף</th><th>פרוט הפ. ברוטו רטרו</th></tr></thead>"
 
                 tbody = "<tbody id='reptbody'>"
                 tbobj = JSON.parse(resobj[2])
@@ -121,7 +115,9 @@ myfunc.submit = function(){ //request can be insert or update
                 tbody += "</tbody>"
                 
                 reptb.innerHTML = thead + tbody;
-                myfunc.sort()
+                
+                document.getElementById("repthead").children[0].children[2].click()
+                //myfunc.sort()
             }
         }
         else if (this.readyState == 4 && this.status != 200){
@@ -153,23 +149,28 @@ myfunc.removechecks = function(){
 
 }
 //********************************************************************************************* */
-myfunc.sort = function(){
+myfunc.sort = function(ev){
+    ths = Array.from(document.getElementById("repthead").children[0].children)
+
+    caller = ths.indexOf(ev)
+
     tbody = document.getElementById("reptbody")
     trs = Array.from(tbody.children)
+    initrs = Array.from(tbody.children)
     newtbody = document.createElement("tbody")
 
-    for (i=0;i<=trs.length;i++){
+    for (eachtr of initrs){
         vallist = []
 
         for (tr of trs){
-            td  = tr.children[2]
+            td  = tr.children[caller]
             vallist.push(parseInt(td.innerHTML))
         }
     
         maxval = vallist.reduce((a, b) => Math.max(a, b), -Infinity)
         j=0;
         for (tr of trs){
-            td  = tr.children[2]
+            td  = tr.children[caller]
             if (parseInt(td.innerHTML) == maxval){
                 newtbody.appendChild(tr)
                 trs.splice(j,1)
@@ -180,6 +181,7 @@ myfunc.sort = function(){
 
     table = document.getElementById("reptb")
     table.children[1].remove()
+    newtbody.setAttribute('id',"reptbody")
     table.appendChild(newtbody)
 }
 

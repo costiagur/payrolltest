@@ -48,7 +48,7 @@ myfunc.submit = function(){ //request can be insert or update
 
                 thead = "<thead id='repthead'><tr><th>מספר עובד</th><th>שם עובד</th><th onclick='myfunc.sort(this)'>נטו</th><th onclick='myfunc.sort(this)'>ברוטו שוטף</th><th onclick='myfunc.sort(this)'>ברוטו הפרשים</th><th onclick='myfunc.sort(this)'>ניכויי חובה</th>";
                 thead += "<th onclick='myfunc.sort(this)'>ניכויי זכות</th><th onclick='myfunc.sort(this)'>ב.שוטף חודש קודם</th><th onclick='myfunc.sort(this)'>הפרש ברוטו</th><th onclick='myfunc.sort(this)'>הפ. חד שנתיים</th><th onclick='myfunc.sort(this)'>הפרש רכב</th><th onclick='myfunc.sort(this)'>הפרש לא מוסבר</th>"
-                thead += "<th>פרוט הפ. ברוטו שוטף</th><th>פרוט הפ. ברוטו רטרו</th></tr></thead>"
+                thead += "<th style='width:16.6%'>פרוט הפ. ברוטו שוטף</th><th style='width:16.6%'>פרוט הפ. ברוטו רטרו</th></tr></thead>"
 
                 tbody = "<tbody id='reptbody'>"
                 tbobj = JSON.parse(resobj[2])
@@ -56,6 +56,8 @@ myfunc.submit = function(){ //request can be insert or update
                 for (eachid in tbobj){
                     tbody += "<tr>"
                     tbody += `<td>${eachid}</td>`
+                    currtbody = ""
+                    retrobody = ""
 
                     subobj = tbobj[eachid]
                     console.log(subobj)
@@ -64,53 +66,53 @@ myfunc.submit = function(){ //request can be insert or update
                         if(eachkey == "Empname"){
                             tbody += `<td>${subobj[eachkey]}</td>`
                         } 
-                        else if (eachkey != "CurrGrossData" && eachkey != "CurrGrossData"){
+                        else if (eachkey != "CurrGrossData" && eachkey != "RetroGrossData"){
                             tbody += `<td>${parseInt(subobj[eachkey])}</td>`
                         }
-
                         else if (eachkey == "CurrGrossData"){
                             
                             if (Object.keys(subobj.CurrGrossData).length != 0){ //check if it is not an empty object
-                                tbody += `<td><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
-                                
+                                currtbody += `<td><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
+                                    
                                 for (subkey in subobj.CurrGrossData){
-                                    tbody += "<tr>"
-                                    tbody += `<td>${subobj.CurrGrossData[subkey].Elem}</td>`
-                                    tbody += `<td>${subobj.CurrGrossData[subkey].Diff}</td>`
-                                    tbody += `<td>${subobj.CurrGrossData[subkey].Amount}</td>`
-                                    tbody += "</tr>"
+                                    currtbody += "<tr>"
+                                    currtbody += `<td>${subobj.CurrGrossData[subkey].Elem}</td>`
+                                    currtbody += `<td>${subobj.CurrGrossData[subkey].Diff}</td>`
+                                    currtbody += `<td>${subobj.CurrGrossData[subkey].Amount}</td>`
+                                    currtbody += "</tr>"
                                 }
-
-                                tbody += `</tbody></table></td>`
-                            
+    
+                                currtbody += `</tbody></table></td>`
+                                
                             }
-
+    
                             else{
-                                tbody += `<td></td>`
+                                currtbody += `<td></td>`
                             }
                         }
+                         
                         else if (eachkey == "RetroGrossData"){
                             
-                            if (Object.keys(subobj.RetroGrossData).length != 0){ //check if it is not an empty object
-                                tbody += `<td><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
+                            if (Object.keys(subobj.RetroGrossData).length != 0){ //check if it is not an empty object 
+                                retrobody += `<td><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
  
                                 for (subkey in subobj.RetroGrossData){
-                                    tbody += "<tr>"
-                                    tbody += `<td>${subobj.CurrGrossData[subkey].Elem}</td>`
-                                    tbody += `<td>${subobj.CurrGrossData[subkey].Diff}</td>`
-                                    tbody += `<td>${subobj.CurrGrossData[subkey].Amount}</td>`
-                                    tbody += "</tr>"
+                                    retrobody += "<tr>"
+                                    retrobody += `<td>${subobj.RetroGrossData[subkey].Elem}</td>`
+                                    retrobody += `<td>${subobj.RetroGrossData[subkey].Diff}</td>`
+                                    retrobody += `<td>${subobj.RetroGrossData[subkey].Amount}</td>`
+                                    retrobody += "</tr>"
                                 }
 
-                                tbody += `</tbody></table></td>`
+                                retrobody += `</tbody></table></td>`
                             }
                             else{
-                                tbody += `<td></td>`
+                                retrobody += `<td></td>`
                             }
                         }
                     }
 
-                    tbody += "</tr>"
+                    tbody += ((currtbody != "")?currtbody:"<td></td>") + ((retrobody != "")?retrobody:"<td></td>") + "</tr>"
                 }
                 tbody += "</tbody>"
                 

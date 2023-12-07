@@ -72,7 +72,7 @@ myfunc.submit = function(){ //request can be insert or update
                         else if (eachkey == "CurrGrossData"){
                             
                             if (Object.keys(subobj.CurrGrossData).length != 0){ //check if it is not an empty object
-                                currtbody += `<td><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
+                                currtbody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
                                     
                                 for (subkey in subobj.CurrGrossData){
                                     currtbody += "<tr>"
@@ -82,7 +82,7 @@ myfunc.submit = function(){ //request can be insert or update
                                     currtbody += "</tr>"
                                 }
     
-                                currtbody += `</tbody></table></td>`
+                                currtbody += `</tbody></table></div></td>`
                                 
                             }
     
@@ -94,7 +94,7 @@ myfunc.submit = function(){ //request can be insert or update
                         else if (eachkey == "RetroGrossData"){
                             
                             if (Object.keys(subobj.RetroGrossData).length != 0){ //check if it is not an empty object 
-                                retrobody += `<td><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
+                                retrobody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
  
                                 for (subkey in subobj.RetroGrossData){
                                     retrobody += "<tr>"
@@ -104,7 +104,7 @@ myfunc.submit = function(){ //request can be insert or update
                                     retrobody += "</tr>"
                                 }
 
-                                retrobody += `</tbody></table></td>`
+                                retrobody += `</tbody></table></div></td>`
                             }
                             else{
                                 retrobody += `<td></td>`
@@ -147,8 +147,15 @@ myfunc.removechecks = function(){
             }
         }           
     }
-
-
+}
+//********************************************************************************************* */
+myfunc.displaytable = function(td){
+    if (td.children[0].style.display == 'none'){
+        td.children[0].style.display = 'table';
+    }
+    else{
+        td.children[0].style.display = 'none';
+    }
 }
 //********************************************************************************************* */
 myfunc.sort = function(ev){

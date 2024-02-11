@@ -23,7 +23,7 @@ def fundsreplace(buffedfile):
 
     resdict = {}
     resdict["90226"] = []
-    resdict["1140"] = []
+    resdict["##clientnum##"] = []
     resdict["empid"] = []
     resdict["mn"] = []
     resdict["empname"] = []

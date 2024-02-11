@@ -60,7 +60,7 @@ def fundsreplace(buffedfile):
                         for i in [-1,1]:
                             
                             resdict["90226"] = resdict["90226"] + ["90226"]*count
-                            resdict["1140"] = resdict["1140"] + ["1140"]*count
+                            resdict["##clientnum##"] = resdict["##clientnum##"] + ["##clientnum##"]*count
                             resdict["empid"] = resdict["empid"] + [eachid]*count
                             resdict["mn"] = resdict["mn"] + middf["mn"].to_list()
                             resdict["empname"] = resdict["empname"] + [""]*count

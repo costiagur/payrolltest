@@ -1,134 +1,4 @@
 myfunc = new Object();
-
-//*********************************************************************************** */
-myfunc.submit = function(){ //request can be insert or update
-    var xhr = new XMLHttpRequest();
-    var fdata = new FormData();
-
-    fdata.append("request","salarycheck");   
-    
-    fdata.append("hazuti",document.getElementById("hazuti").files[0]);
-    fdata.append("f1313",document.getElementById("f1313").files[0]);
-
-    requestlist = []
-    reqlevel = {}
-    i = 0
-
-    for (eachsemel of document.querySelectorAll("input[type =checkbox]")){
-        if (eachsemel.checked == true){
-            requestlist[i] = eachsemel.value
-            reqlevel[eachsemel.id + "_level"] = document.getElementById(eachsemel.id + "_level").value
-            i++
-        }
-    }
-
-    console.log (requestlist)
-
-    fdata.append("requestlist",JSON.stringify(requestlist));
-    fdata.append("reqlevel",JSON.stringify(reqlevel));
-
-    xhr.open('POST',"http://localhost:"+ui.port,true)
-
-    document.getElementById("loader").style.display='block'; //display loader
-
-    xhr.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {   
-            //console.log(this.responseText)
-
-            document.getElementById("loader").style.display='none'; //close loader
-
-            resobj = JSON.parse(this.responseText);
-
-            if (resobj[0] == "Error"){
-                alert(resobj[1])
-            }
-            else{
-                myfunc.download(resobj[0],resobj[1])
-                reptb = document.getElementById("reptb")
-
-                thead = "<thead id='repthead'><tr><th>מספר עובד</th><th>שם עובד</th><th onclick='myfunc.sort(this)'>נטו</th><th onclick='myfunc.sort(this)'>ברוטו שוטף</th><th onclick='myfunc.sort(this)'>ברוטו הפרשים</th><th onclick='myfunc.sort(this)'>ניכויי חובה</th>";
-                thead += "<th onclick='myfunc.sort(this)'>ניכויי זכות</th><th onclick='myfunc.sort(this)'>ב.שוטף חודש קודם</th><th onclick='myfunc.sort(this)'>הפרש ברוטו</th><th onclick='myfunc.sort(this)'>הפ. חד שנתיים</th><th onclick='myfunc.sort(this)'>הפרש רכב</th><th onclick='myfunc.sort(this)'>הפרש לא מוסבר</th>"
-                thead += "<th style='width:16.6%'>פרוט הפ. ברוטו שוטף</th><th style='width:16.6%'>פרוט הפ. ברוטו רטרו</th></tr></thead>"
-
-                tbody = "<tbody id='reptbody'>"
-                tbobj = JSON.parse(resobj[2])
-
-                for (eachid in tbobj){
-                    tbody += "<tr>"
-                    tbody += `<td>${eachid}</td>`
-                    currtbody = ""
-                    retrobody = ""
-
-                    subobj = tbobj[eachid]
-                    console.log(subobj)
-
-                    for (eachkey in subobj){
-                        if(eachkey == "Empname"){
-                            tbody += `<td>${subobj[eachkey]}</td>`
-                        } 
-                        else if (eachkey != "CurrGrossData" && eachkey != "RetroGrossData"){
-                            tbody += `<td>${parseInt(subobj[eachkey])}</td>`
-                        }
-                        else if (eachkey == "CurrGrossData"){
-                            
-                            if (Object.keys(subobj.CurrGrossData).length != 0){ //check if it is not an empty object
-                                currtbody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
-                                    
-                                for (subkey in subobj.CurrGrossData){
-                                    currtbody += "<tr>"
-                                    currtbody += `<td>${subobj.CurrGrossData[subkey].Elem}</td>`
-                                    currtbody += `<td>${subobj.CurrGrossData[subkey].Diff}</td>`
-                                    currtbody += `<td>${subobj.CurrGrossData[subkey].Amount}</td>`
-                                    currtbody += "</tr>"
-                                }
-    
-                                currtbody += `</tbody></table></div></td>`
-                                
-                            }
-    
-                            else{
-                                currtbody += `<td></td>`
-                            }
-                        }
-                         
-                        else if (eachkey == "RetroGrossData"){
-                            
-                            if (Object.keys(subobj.RetroGrossData).length != 0){ //check if it is not an empty object 
-                                retrobody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
- 
-                                for (subkey in subobj.RetroGrossData){
-                                    retrobody += "<tr>"
-                                    retrobody += `<td>${subobj.RetroGrossData[subkey].Elem}</td>`
-                                    retrobody += `<td>${subobj.RetroGrossData[subkey].Diff}</td>`
-                                    retrobody += `<td>${subobj.RetroGrossData[subkey].Amount}</td>`
-                                    retrobody += "</tr>"
-                                }
-
-                                retrobody += `</tbody></table></div></td>`
-                            }
-                            else{
-                                retrobody += `<td></td>`
-                            }
-                        }
-                    }
-
-                    tbody += ((currtbody != "")?currtbody:"<td></td>") + ((retrobody != "")?retrobody:"<td></td>") + "</tr>"
-                }
-                tbody += "</tbody>"
-                
-                reptb.innerHTML = thead + tbody;
-                
-                document.getElementById("repthead").children[0].children[2].click()
-                //myfunc.sort()
-            }
-        }
-        else if (this.readyState == 4 && this.status != 200){
-            alert(this.responseText)
-        }
-    }
-
-    xhr.send(fdata);     
-}
 //********************************************************************************************* */
 myfunc.removechecks = function(){
     if (document.getElementById("remchecks").dataset.removecheck == "0"){
@@ -137,7 +7,8 @@ myfunc.removechecks = function(){
             if (eachsemel.checked == true){
                 eachsemel.checked = false
             }
-        }   
+        }
+        document.getElementById("remchecks").value = "בחירה"   
     }
     else{
         document.getElementById("remchecks").dataset.removecheck = "0"
@@ -145,7 +16,8 @@ myfunc.removechecks = function(){
             if (eachsemel.checked == false){
                 eachsemel.checked = true
             }
-        }           
+        }
+        document.getElementById("remchecks").value = "הסרה"
     }
 }
 //********************************************************************************************* */
@@ -275,4 +147,195 @@ myfunc.submitfunds = function(){ //request can be insert or update
     }
 
     xhr.send(fdata);     
+}
+//*********************************************************************************** */
+myfunc.msg = function(title,msg_txt){
+    document.getElementById("msg_title").innerHTML = title
+    document.getElementById("msg_txt").innerHTML = msg_txt
+    document.getElementById("msg_dg").showModal()
+}
+//********************************************************************************************* */
+myfunc.response = function(txt1,txt2){
+    tbody = document.getElementById("response_tbody")
+    tr = document.createElement("tr")
+    td1 = document.createElement("td")
+    td1_content = document.createTextNode(txt1)
+    td1.appendChild(td1_content)
+
+    td2 = document.createElement("td")
+    td2_content = document.createTextNode(txt2)
+    td2.appendChild(td2_content)
+  
+    tbody.appendChild(tr)
+    tr.appendChild(td1)
+    td1.insertAdjacentElement('afterend',td2)
+
+    document.getElementById("response_dg").showModal()
+}
+//********************************************************************************************* */
+myfunc.resp_close = function(){
+    document.getElementById("response_dg").close();
+    tbody = document.getElementById("response_tbody")
+    tbody.innerHTML = ""
+}
+//********************************************************************************************* */
+myfunc.sendrequest = function(fdata){
+    return new Promise((resolve) =>{    
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST',"http://localhost:"+ui.port,true)
+    
+        xhr.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {   
+                console.log(this.responseText)
+    
+                resobj = JSON.parse(this.responseText);
+                resolve(resobj)    
+     
+            }
+            else if (this.readyState == 4 && this.status != 200){
+                resolve(["Error",this.responseText])
+
+            }
+        }
+    
+        xhr.send(fdata);   
+    })
+}
+
+//*********************************************************************************** */
+myfunc.submit = async function(){ //request can be insert or update
+    var fdata = new FormData();
+
+    fdata.append("request","salarycheck");   
+
+    document.getElementById("loader").style.display='block'; //display loader
+
+    for (eachsemel of document.querySelectorAll("input[type =checkbox]")){
+        if (eachsemel.checked == true){
+            fdata.set("reqtest",eachsemel.value);
+            fdata.set("reqlevel",document.getElementById(eachsemel.id + "_level").value);
+               
+            const resobj = await myfunc.sendrequest(fdata)
+            if (resobj[0] == "Error"){
+                myfunc.msg(resobj[0], resobj[1])
+            }
+            else{
+                if (resobj[0] == "totalrep"){
+                    myfunc.response("טבלת השוואה מוכנה","")   
+                    myfunc.resulttable(resobj[1])
+                }
+                else{
+                    myfunc.response(resobj[2],resobj[1])
+                }
+            } 
+        }
+    }
+
+    fdata.set("request","testfile");
+    const resobj = await myfunc.sendrequest(fdata)
+    if (resobj[0] == "testfile"){
+        myfunc.download(resobj[1],resobj[2])
+    }
+
+    document.getElementById("loader").style.display='none'; //close loader
+
+
+}
+//************************************************************************************************ */
+myfunc.upload = async function(){
+    var fdata = new FormData();
+
+    fdata.append("request","fileupload");   
+
+    fdata.append("hazuti",document.getElementById("hazuti").files[0]);
+    fdata.append("hoursquery",document.getElementById("hoursquery").files[0]);
+
+    document.getElementById("loader").style.display='block'; //display loader
+
+    const resobj = await myfunc.sendrequest(fdata)
+    if (resobj[0] == "Error"){
+        myfunc.msg( resobj[0], resobj[1])
+        document.getElementById("loader").style.display='none'; //close loader
+
+    }
+    else{
+       if (resobj[0] == "uploadedrows"){
+           myfunc.response("מספר רשימות שהועלו", resobj[1])
+           document.getElementById("loader").style.display='none'; //close loader
+           myfunc.submit()
+       }
+    }
+}
+//************************************************************************************************* */
+myfunc.resulttable = function(resobj){ //request can be insert or update
+ 
+    reptbody = document.getElementById("reptbody")
+
+    tbobj = resobj
+
+    for (eachid in tbobj){
+        tbody += "<tr>"
+        tbody += `<td>${eachid}</td>`
+        currtbody = ""
+        retrobody = ""
+
+        subobj = tbobj[eachid]
+
+        for (eachkey in subobj){
+            if(eachkey == "Empname" || eachkey == "Order"){
+                tbody += `<td>${subobj[eachkey]}</td>`
+            } 
+            else if (eachkey != "CurrDiff" && eachkey != "RetroDiff"){
+                tbody += `<td>${parseInt(subobj[eachkey])}</td>`
+            }
+            else if (eachkey == "CurrDiff"){
+                            
+                if (Object.keys(subobj.CurrDiff).length != 0){ //check if it is not an empty object
+                    currtbody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש מהותי</th></tr></thead><tbody>`
+                                    
+                    for (subkey in subobj.CurrDiff){
+                        currtbody += "<tr>"
+                        currtbody += `<td>${subobj.CurrDiff[subkey].Elem_heb}</td>`
+                        //currtbody += `<td>${subobj.CurrGrossData[subkey].Diff}</td>`
+                        currtbody += `<td>${subobj.CurrDiff[subkey].Significant}</td>`
+                        currtbody += "</tr>"
+                    }
+    
+                        currtbody += `</tbody></table></div></td>`
+                                
+                    }
+    
+                else{
+                    currtbody += `<td></td>`
+                }
+            }
+                         
+            else if (eachkey == "RetroDiff"){
+                            
+                if (Object.keys(subobj.RetroDiff).length != 0){ //check if it is not an empty object 
+                    retrobody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
+ 
+                    for (subkey in subobj.RetroDiff){
+                        retrobody += "<tr>"
+                        retrobody += `<td>${subobj.RetroDiff[subkey].Elem_heb}</td>`
+                        //retrobody += `<td>${subobj.RetroGrossData[subkey].Diff}</td>`
+                        retrobody += `<td>${subobj.RetroDiff[subkey].Significant}</td>`
+                        retrobody += "</tr>"
+                    }
+
+                    retrobody += `</tbody></table></div></td>`
+                }
+                else{
+                    retrobody += `<td></td>`
+                }
+            }
+        }
+
+        tbody += ((currtbody != "")?currtbody:"<td></td>") + ((retrobody != "")?retrobody:"<td></td>") + "</tr>"
+    }
+                
+    reptbody.innerHTML = tbody;
+                
+    document.getElementById("repthead").children[0].children[2].click()
+
 }

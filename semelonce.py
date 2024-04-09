@@ -1,67 +1,43 @@
 #סמלים שמופיעים פעם אחת
-import pandas as pd
 import numpy as np
+import custom
+import pandas as pd
 
-def semelonce(df,xlwriter,refmonth,prevmonth,level="0.05"):
+def semelonce(level="0.05"):
 
     level = float(level)
 
-    middf = df[(df["Division"] != 90)&(df["Refdate"]==refmonth)&(df["CurAmount"] != 0)&(df["Elemtype"] == "addition components")]
+    middf = custom.DF101.loc[(custom.DF101["Division"] != custom.pensiondepartment)&(custom.DF101["Refdate"]==custom.REFMONTH)&(custom.DF101["CurAmount"] != 0)&(custom.DF101["Elemtype"] == "addition components")]
 
-    resdict= dict()
-    resdict["Empid"] = []
-    resdict["Empname"] = []
-    resdict["mn"] = []
-    resdict["Rank"] = []
-    resdict["Elem_heb"] = []
-    resdict["CurAmount"] = []
+    empinranks = middf[["Rank","Empid"]].groupby(by = ["Rank"],as_index=False,group_keys=True).nunique("Empid")
 
-    for eachrank in middf["Rank"].unique():
-            rankdf = middf[middf["Rank"] == eachrank]
-            empnum = len(rankdf["Empid"].unique())
-            elemdf = rankdf["Elem"].value_counts()      
-            
-            for eachelem in elemdf.index:
-                elemcount = elemdf[eachelem]
+    empinranks["cutoff"] = empinranks.apply(lambda row: np.round(row["Empid"]*level,0),axis=1)
 
-                if elemcount/empnum < (1-level) and elemcount/empnum > level:
-                    pass
-                elif elemcount/empnum <= level:
-                    resdict["Empid"] = resdict["Empid"] + rankdf.loc[(rankdf["Elem"] == eachelem)&(rankdf["Rank"] == eachrank),"Empid"].to_list()
-                    resdict["Empname"] = resdict["Empname"] + rankdf.loc[(rankdf["Elem"] == eachelem)&(rankdf["Rank"] == eachrank),"Empname"].to_list()
-                    resdict["mn"] = resdict["mn"] + rankdf.loc[(rankdf["Elem"] == eachelem)&(rankdf["Rank"] == eachrank),"mn"].to_list()
-                    resdict["Rank"] = resdict["Rank"] + rankdf.loc[(rankdf["Elem"] == eachelem)&(rankdf["Rank"] == eachrank),"Rank"].to_list()
-                    resdict["Elem_heb"] = resdict["Elem_heb"] + rankdf.loc[(rankdf["Elem"] == eachelem)&(rankdf["Rank"] == eachrank),"Elem_heb"].to_list()
-                    resdict["CurAmount"] = resdict["CurAmount"] + rankdf.loc[(rankdf["Elem"] == eachelem)&(rankdf["Rank"] == eachrank),"CurAmount"].to_list()
-                    
-                
-                elif elemcount/empnum >= (1-level):
-                    seta = set(rankdf["Empid"])
-                    setb = set(rankdf[~rankdf["Elem"].isin([eachelem])]["Empid"])
-                    difset = seta.difference(setb)
-                    
-                    if len(difset) > 0:
-                        resdict["Empid"] = resdict["Empid"] + list(difset)
-                        for eachid in difset:
-                            resdict["Empname"] = resdict["Empname"] + [middf.loc[middf["Empid"]==eachid,"Empname"].unique()[0]] # requires loop because there might be two employees with the same name
-                        #
-                        resdict["mn"] = resdict["mn"] + [np.nan] * len(difset)
-                        resdict["Rank"] = resdict["Rank"] + [eachrank] * len(difset) 
-                        resdict["Elem_heb"] = resdict["Elem_heb"] + [eachelem] * len(difset)
-                        resdict["CurAmount"] = resdict["CurAmount"] + [np.nan]* len(difset)
-                    #
-                #
-            #
-            
+    uniqsemels = middf[middf["Rank"].isin(empinranks.loc[empinranks["cutoff"] > 0,"Rank"])].groupby(by = ["Rank","Elem"],as_index=False,group_keys=True).count()
+
+    uniqsemels["uniq"] = uniqsemels.apply(lambda row:empinranks.loc[empinranks["Rank"]==row["Rank"],"cutoff"].item(),axis=1)
+    uniqsemels["todrop"] = uniqsemels.apply(lambda row:True if row["Empid"] > row["uniq"] else False,axis=1)
+
+    uniqsemels.drop(uniqsemels[uniqsemels["todrop"] == True].index,inplace=True)
+
+    uniqsemels.drop(["todrop","uniq"],axis=1,inplace=True)
+
+    def isuniq(row):
+        res = uniqsemels.loc[(uniqsemels["Rank"] == row["Rank"])&(uniqsemels["Elem"] == row["Elem"]),"Elem"]
+        if res.size != 0:
+            return True
+        else:
+            return False
+        #
     #
+ 
+    resdf = middf.loc[middf.apply(isuniq,axis=1) == True]
 
-    resdf = pd.DataFrame.from_dict(resdict)
-    resdf.sort_values(by=['Elem_heb'],inplace=True)
-            
-    resdf.head(10)
+    with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
+        resdf.to_excel(writer,sheet_name="semel_once",index=False)
+    # 
+        
 
-    resdf.to_excel(xlwriter,sheet_name="semel_once",index=False)
-
-    return len(resdf["Empid"].unique())
+    return resdf.shape[0]
 
 #

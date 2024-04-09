@@ -1,134 +1,118 @@
 #השוואת ברוטו שוטף ללא חד שנתיים
 import pandas as pd
+import numpy as np
+import custom
 
-def grosscur(df,xlwriter,refmonth,prevmonth,level="0.2,2000"):
+def grosscur(level="0.2,2000"):
     
-    grouped = df.groupby(by = ["Empid","Empname","Elemtype","Refdate"],as_index=False,group_keys=True)
-    groupdf = grouped.sum(["PrevAmount","CurAmount"])
-    empids = set(df[df["Startdate"] <= prevmonth]["Empid"])
-    
-    annualelem = ["2276","2278","290","291","295","2151","4737","5831"]
-    #annualelem - תשתלומים שנתיים. לא מעניינים לצורך בדיקה זו
-    byreport = ["1","16","17","32","153","158","169","1056","100","1034","1039","4200","4500","4501","5127","5128","5234","5243","5244","5245","5403","5404","5405","5410","5411","5465","5466","5467","5840","5841","5842","5843"]
-    #byreport - סמלים שצריך לדווח והם בבסיס הפנסיה ולכן תלויים בחלקיות משרה
-
-    resdict = dict()
-    resdict["Empid"] = []
-    resdict["Empname"] = []
-    resdict["Elem"] = []
-    resdict["Diff"] = []
-    resdict["Amount"] = []
-
     levellist = level.split(",")
 
     cutoffrate = min([float(eachlevel) for eachlevel in levellist])
     cutoffamount = max([float(eachlevel) for eachlevel in levellist])
 
-    for eachemp in empids:
-        grosscurr = sum(groupdf[(groupdf["Empid"] == eachemp)&(groupdf["Elemtype"] == "addition components")&(groupdf["Refdate"] == refmonth)]["CurAmount"])
-        grossprev = sum(groupdf[(groupdf["Empid"] == eachemp)&(groupdf["Elemtype"] == "addition components")&(groupdf["Refdate"] == prevmonth)]["PrevAmount"])
-        grosscurr = grosscurr - sum(df[(df["Empid"] == eachemp)&(df["Refdate"] == refmonth)&(df["Elem"].isin(annualelem))]["CurAmount"])
-        grossprev = grossprev - sum(df[(df["Empid"] == eachemp)&(df["Refdate"] == prevmonth)&(df["Elem"].isin(annualelem))]["PrevAmount"])
+    currentemp = [None]
+
+    basedict = dict()
+    basedict["Empid"] = []
+    basedict["Empname"] = []
+    basedict["Elemtype"] = []
+    basedict["Elem"] = []
+    basedict["Elem_heb"] = []
+    basedict["Empid_mn"] = []
+    basedict["PrevAmount"] = []
+    basedict["CurCur"] = []
+    basedict["Diff"] = []
+    basedict["Significant"] = []
+
+    middf =  custom.DF101.loc[(custom.DF101["Refdate"] >= custom.PREVMONTH)&((custom.DF101["Elemtype"] == "addition components")|(custom.DF101["Elem_heb"] == custom.dayvalue)|(custom.DF101["Elem"] == custom.semelratio)),["Empname","Empid","Refdate","Elem","Elem_heb","PrevAmount","CurAmount","Empid_mn","Elemtype"]]
+
+    def highdiff(row):
+        res = 0
         
-        grossdiff = grosscurr - grossprev
-        grossdiff = round(grossdiff,0)
+        if row["Elem"] not in (custom.annualelement + custom.byreport):
         
-        if abs(grossdiff) > cutoffamount:
-            
-            middf = df[(df["Empid"] == eachemp)&(df["Refdate"] >= prevmonth)]
-            
-            currate = sum(middf[(middf["Refdate"] == refmonth)&(middf["Elem"] == "90148")]["CurAmount"])
-            prevrate = sum(middf[(middf["Refdate"] == prevmonth)&(middf["Elem"] == "90148")]["PrevAmount"])
-            prevbase = sum(middf[(middf["Refdate"] == prevmonth)&(middf["Elem"] == "91025")]["PrevAmount"])
-            prevbase = prevbase - sum(middf[middf['Elem'].isin(("2151","290"))]["PrevAmount"])
-
-            empname = middf.loc[middf["Empid"]== eachemp,"Empname"].unique()[0]
-
-            resdict["Empid"].append(eachemp)
-            resdict["Empname"].append(empname)
-            resdict["Elem"].append("הפרש ברוטו שוטף")
-            resdict["Diff"].append(grossdiff)
-            resdict["Amount"].append(0)      
-            
-            resdict["Empid"].append(eachemp)
-            resdict["Empname"].append(empname)
-            resdict["Elem"].append("חלקיות קודמת")
-            resdict["Diff"].append(prevrate)
-            resdict["Amount"].append(0)
-
-            resdict["Empid"].append(eachemp)
-            resdict["Empname"].append(empname)
-            resdict["Elem"].append("חלקיות החודש")
-            resdict["Diff"].append(currate)
-            resdict["Amount"].append(0)
-
-            if prevrate == 0 and currate != 0:
-                rateadd = prevbase
-            elif prevrate == 0 and currate == 0: #if there is no rate
-                pass
+            if abs(row['Diff']) >= cutoffamount:
+                res = row['Diff']
+        
+            elif abs(row['Diff']) / abs(highdf.loc[highdf['Empid_mn'] == row['Empid_mn'],'Diff'].item()) >= cutoffrate:
+                res = row['Diff']
+        
             else:
-                rateadd = prevbase * (currate / prevrate - 1)
-            #
-            
-            if abs(rateadd)/abs(grossdiff) >= cutoffrate:       
-                resdict["Empid"].append(eachemp)
-                resdict["Empname"].append(empname)
-                resdict["Elem"].append("91025 - בסיס הפנסיה")
-                resdict["Diff"].append(0)
-                resdict["Amount"].append(round(rateadd,0))
-            #
-            
-            unproratedf = middf[(~middf["Elem"].isin(byreport+annualelem))&(middf["Elemtype"] == "addition components")] #סמלים שאינם קשורים לבסיס הפנסיה
-            
-            for eachelem in unproratedf['Elem'].unique(): #not prorate
-                prevsum = sum(unproratedf[(unproratedf["Elem"] == eachelem)]["PrevAmount"])
-                currsum = sum(unproratedf[(unproratedf["Refdate"] == refmonth)&(unproratedf["Elem"] == eachelem)]["CurAmount"])
-                if abs(currsum-prevsum)/abs(grossdiff) >= cutoffrate:
-                    resdict["Empid"].append(eachemp)
-                    resdict["Empname"].append(empname)
-                    resdict["Elem"].append(unproratedf.loc[(unproratedf["Empid"]== eachemp)&(unproratedf["Elem"] == eachelem),"Elem_heb"].unique()[0])
-                    resdict["Diff"].append(0)
-                    resdict["Amount"].append(round(currsum-prevsum,0))
-                #
-            #
-
-            byreportdf =  middf[middf["Elem"].isin(byreport)]
-
-            for eachelem in byreportdf['Elem'].unique(): #above prorate
-
-                diffamount = 0
-                
-                prevsum = sum(byreportdf[(byreportdf["Elem"] == eachelem)]["PrevAmount"])
-                currsum = sum(byreportdf[(byreportdf["Refdate"] == refmonth)&(byreportdf["Elem"] == eachelem)]["CurAmount"])
-                
-                if prevrate == 0 and currate != 0:
-                    pass
-                elif prevrate == 0 and currate == 0: #if there is no rate
-                    pass
-                else:
-                    diffamount = currsum - prevsum * (currate / prevrate)
-                #            
-                
-                if abs(diffamount)/abs(grossdiff) >= cutoffrate:
-                    resdict["Empid"].append(eachemp)
-                    resdict["Empname"].append(empname)
-                    resdict["Elem"].append(byreportdf.loc[(byreportdf["Empid"]== eachemp)&(byreportdf["Elem"] == eachelem),"Elem_heb"].unique()[0])
-                    resdict["Diff"].append(0)
-                    resdict["Amount"].append(round(diffamount,0))
-                #
-            #      
+                res = 0
         #
-    #
-    resdf = pd.DataFrame.from_dict(resdict)
+        
+        elif row["Elem"] in custom.byreport:
+            prevrate = groupdf.loc[(groupdf['Empid_mn']==row['Empid_mn'])&(groupdf['Elem'] == custom.semelratio),'PrevAmount'].item()
+            prevhourval = groupdf.loc[(groupdf['Empid_mn']==row['Empid_mn'])&(groupdf["Elem_heb"] == custom.dayvalue),'PrevAmount'].item()
+            
+            if prevrate != 0:
+                currate = groupdf.loc[(groupdf['Empid_mn']==row['Empid_mn'])&(groupdf['Elem'] == custom.semelratio),'CurCur'].item()   
+                updatedamount = 22*prevhourval / prevrate * currate
+            else:
+                updatedamount = 22*prevhourval
+                currate = 0
+            #
+            
+            if abs(row['Diff']-updatedamount) >= cutoffamount:
+                res = row['Diff']
+        
+            elif abs(row['Diff']-updatedamount) / abs(highdf.loc[highdf['Empid_mn'] == row['Empid_mn'],'Diff'].item()) >= cutoffrate:
+                res = row['Diff']
+        
+            else:
+                res = 0
+            #
+        
+            if row['Empid_mn'] !=currentemp[0] and res != 0:
 
-    resdf.to_excel(xlwriter,sheet_name="currgross_diff",index=False)
+                basedict["Empid"] = basedict["Empid"] + [row['Empid']]
+                basedict["Empname"] = basedict["Empname"] + [row['Empname']]
+                basedict["Elemtype"] = basedict["Elemtype"] + ['additional data']
+                basedict["Elem"] = basedict["Elem"] + [0]
+                basedict["Elem_heb"] = basedict["Elem_heb"] + ['בסיס פנסיה מחושב']
+                basedict["Empid_mn"] = basedict["Empid_mn"] + [row['Empid_mn']]
+                basedict["PrevAmount"] = basedict["PrevAmount"] + [22*prevhourval*prevrate]
+                basedict["CurCur"] = basedict["CurCur"] + [22*prevhourval*currate]
+                basedict["Diff"] = basedict["Diff"] + [22*prevhourval * (currate - prevrate)]
+                basedict["Significant"] = basedict["Significant"] + [22*prevhourval * (currate - prevrate)]
+
+                currentemp[0] = row['Empid_mn']
+                
+            #
+
+        return np.round(res,0)
+    #
+
+
+    middf["CurCur"] = middf.apply(lambda row: row["CurAmount"] if row["Refdate"] == custom.REFMONTH else 0,axis=1)
+
+    groupdf = middf.groupby(by = ["Empid","Empname","Elemtype","Elem", "Elem_heb","Empid_mn"],as_index=False,group_keys=True).sum(['PrevAmount','CurCur'])
+
+    groupdf["Diff"] = groupdf['CurCur'] - groupdf['PrevAmount']
+
+    sumdf = groupdf[groupdf['Elemtype'] == "addition components"].groupby(by = "Empid_mn",as_index=False,group_keys=True).sum('Diff')
+
+    highdf = sumdf.loc[(sumdf['Diff'] >= cutoffamount)|(sumdf['Diff'] <= -cutoffamount)] 
+
+    groupdf = groupdf.loc[groupdf["Empid_mn"].isin(highdf["Empid_mn"].unique())]
+
+    groupdf['Significant'] = groupdf.apply(highdiff, axis=1)
+
+    basedictdf = pd.DataFrame.from_dict(basedict)
+
+    finpd = pd.concat([groupdf,basedictdf], ignore_index = True)
+
+    finpd.sort_values(by=["Empid_mn","Elemtype","Elem"],inplace=True,ignore_index=True)
 
     jsdict = {}
 
-    for eachid in resdf["Empid"].unique():
-        jsdict[eachid] = {}
-        jsdict[eachid] = resdf.loc[resdf["Empid"] == eachid,["Elem","Diff","Amount"]].to_dict('records')
+    for eachindex in finpd["Empid"].unique():
+        jsdict[eachindex] = finpd.loc[(finpd['Significant']!= 0)&(finpd['Empid']== eachindex),["Elem_heb","Significant"]].to_dict('records')
+    
+    with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
+        finpd.loc[finpd['Significant']!= 0].to_excel(writer,sheet_name="currgross_diff")
     #
 
-    return [len(resdf["Empid"].unique()),"grosscur",jsdict]
+
+    return jsdict
 #

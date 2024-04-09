@@ -1,82 +1,64 @@
 #מצג כולל
-
-import pandas as pd
+import custom
+import db
 import numpy as np
+import pandas as pd
+import grosscur
+import grossretro
 
-def totalrep(df,xlwriter,refmonth,prevmonth):
+def totalrep(level="0.2,2000"):
 
-    df["CurofCur"] = df["CurAmount"] * (df["Refdate"] == refmonth) * (df["Elemtype"] == "addition components")
-    df["RetrofCur"] = df["CurAmount"] * (df["Refdate"] < refmonth) * (df["Elemtype"] == "addition components")
-    df["CurofPrev"] =  df["PrevAmount"] * (df["Refdate"] == prevmonth) * (df["Elemtype"] == "addition components")
-    df["NetCur"] =  df["CurAmount"] * (df["Elem"] == "91096")
+    mydb = db.MYSQLDB()
 
-    groupdf = df.groupby(by = ["Empname","Empid","Elemtype"],as_index=False,group_keys=True).sum(["CurofCur","RetrofCur","CurofPrev","NetCur"])
-    groupdf.drop(columns=["mn","וותק","Division","מחלקה","PrevQuantity","CurQuantity"],inplace=True)
-    groupdf["CurrDiff"] = (groupdf["CurofCur"] -  groupdf["CurofPrev"])
-
-    Annualdf = df[df["Elem"].isin(("2276","2278","290","291","295","2151","4737"))] 
-    Vehdf =  df[df["Elem"].isin(("143","149","150","7143","7149","7150","4971","4972"))]
-
-    grpAnnualdf = Annualdf.groupby(by= "Empid",as_index=False,group_keys=True).sum(["CurofCur","CurofPrev"])
-    grpAnnualdf.drop(columns=["mn","וותק","Division","מחלקה","PrevQuantity","CurQuantity"],inplace=True)
-    grpVehdf = Vehdf.groupby(by= "Empid",as_index=False,group_keys=True).sum(["CurofCur","CurofPrev"])
-    grpVehdf.drop(columns=["mn","וותק","Division","מחלקה","PrevQuantity","CurQuantity"],inplace=True)
-
-    resdict = {}
-    resdict["Empid"] = []
-    resdict["Empname"] = []
-    resdict["Net"] = []
-    resdict["CurrGross"] = []
-    resdict["RetroGross"] = []
-    resdict["CompulsoryDeduct"] = []
-    resdict["VoluntaryDeduct"] = []
-    resdict["PrevCurrGross"] = []
-    resdict["CurrDiffGross"] = []
-    resdict["Annual"] = []
-    resdict["Vehicle"] = []
-    resdict["UnexplainedDiff"] = []
-
-    for eachid in groupdf["Empid"].unique():
-        resdict["Empid"].append(eachid)
-        resdict["Empname"].append(groupdf.loc[groupdf["Empid"] == eachid,"Empname"].unique()[0])
-        resdict["Net"].append(groupdf.loc[groupdf["Empid"] == eachid,"NetCur"].sum())
-        resdict["CurrGross"].append(groupdf.loc[(groupdf["Empid"] == eachid)&(groupdf["Elemtype"]=="addition components"),"CurofCur"].sum())
-        resdict["RetroGross"].append(groupdf.loc[(groupdf["Empid"] == eachid)&(groupdf["Elemtype"]=="addition components"),"RetrofCur"].sum())
-        resdict["CompulsoryDeduct"].append(groupdf.loc[(groupdf["Empid"] == eachid)&(groupdf["Elemtype"]=="compulsory deductions"),"CurAmount"].sum())
-        resdict["VoluntaryDeduct"].append(groupdf.loc[(groupdf["Empid"] == eachid)&(groupdf["Elemtype"]=="voluntary deductions"),"CurAmount"].sum())
-        resdict["PrevCurrGross"].append(groupdf.loc[(groupdf["Empid"] == eachid)&(groupdf["Elemtype"]=="addition components"),"PrevAmount"].sum())
-        
-        currdiff = groupdf.loc[(groupdf["Empid"] == eachid)&(groupdf["Elemtype"]=="addition components"),"CurrDiff"].sum()
+    middf = custom.DF101.loc[custom.DF101["Elemtype"].isin(("addition components","compulsory deductions","voluntary deductions")),["Empid","Empname","Refdate","Elemtype","PrevAmount","CurAmount","Elem"]]   
+       
+    middf["GrossCur"] = middf.apply(lambda row: row["CurAmount"] if row["Elemtype"] == "addition components" else 0,axis=1)
+    middf["GrossPrev"] = middf.apply(lambda row: row["PrevAmount"] if row["Elemtype"] == "addition components" else 0,axis=1)
+    middf["GrossCurCur"] = middf.apply(lambda row: row["GrossCur"] if row["Refdate"] == custom.REFMONTH else 0,axis=1)
+    middf["GrossCurRetro"] = middf.apply(lambda row: row["GrossCur"] if row["Refdate"] < custom.REFMONTH else 0, axis=1)
+    middf["GrossPrevCur"] = middf.apply(lambda row: row["GrossPrev"] if row["Refdate"] == custom.PREVMONTH else 0, axis=1)
+    middf["TaxesCur"] = middf.apply(lambda row: row["CurAmount"] if row["Elemtype"] == "compulsory deductions" else 0,axis=1)
+    middf["DeductsCur"] = middf.apply(lambda row: row["CurAmount"] if row["Elemtype"] == "voluntary deductions" else 0,axis=1)
+    middf["NetCur"] = middf.apply(lambda row: np.round(row["CurAmount"],0) if row["Elemtype"] == "addition components" else np.round(-row["CurAmount"],0), axis=1)
+    middf["Annual"] = middf.apply(lambda row: row["GrossCur"]-row["GrossPrev"] if row["Elem"] in custom.annualelement else 0, axis=1)
+    middf["Vehicle"] = middf.apply(lambda row: row["GrossCur"]-row["GrossPrev"] if row["Elem"] in custom.annualvehicle else 0, axis=1)
     
-        resdict["CurrDiffGross"].append(currdiff)
+    groupdf = middf.groupby(by = ["Empname","Empid"],as_index=False,group_keys=True).sum(["GrossCur","GrossPrev","GrossCurCur","GrossCurRetro","GrossPrevCur","TaxesCur","DeductsCur","NetCur","Annual","Vehicle"])
+    groupdf.drop(columns=["CurAmount","PrevAmount"],inplace=True)
     
-        annualdiff = grpAnnualdf.loc[grpAnnualdf["Empid"] == eachid,"CurofCur"].sum()-grpAnnualdf.loc[grpAnnualdf["Empid"] == eachid,"CurofPrev"].sum()
-        vehdiff = grpVehdf.loc[grpVehdf["Empid"] == eachid,"CurofCur"].sum()-grpVehdf.loc[grpVehdf["Empid"] == eachid,"CurofPrev"].sum()
-        
-        resdict["Annual"].append(annualdiff)
-        resdict["Vehicle"].append(vehdiff)
-        
-        resdict["UnexplainedDiff"].append(currdiff - vehdiff - annualdiff)
+    groupdf["Unexplained"] = groupdf.apply(lambda row: np.round(row["GrossCur"] -row["GrossPrev"]- row["Annual"] - row["Vehicle"],0), axis=1)
+
+    groupdf.sort_values(by=['NetCur'], ascending=False, inplace=True)
+    
+    eomonth = pd.to_datetime(custom.REFMONTH) + pd.DateOffset(months = +1)
+    listoflists = mydb.searchorders(custom.REFMONTH,eomonth)
+    orderdf = pd.DataFrame(listoflists,columns=['empid','ordercapt','ordertext'])
+
+    orderdf["text"] = orderdf.apply(lambda row: "{} - {}".format(row["ordercapt"] if isinstance(row["ordercapt"],str) else row["ordercapt"].decode('UTF-8'),row["ordertext"] if isinstance(row["ordertext"],str) else row["ordertext"].decode('UTF-8')),axis=1)
+
+    orderdf.drop_duplicates(inplace=True)
+    
+    groupdf["Order"] = groupdf.apply(lambda row: "; ".join(orderdf.loc[orderdf["empid"] == row["Empid"],"text"].tolist()),axis=1) 
+
+    cols = ["Empid","Empname","NetCur","GrossCur","GrossPrev","GrossCurCur","GrossCurRetro","GrossPrevCur","TaxesCur","DeductsCur","Annual","Vehicle","Unexplained","Order"]
+
+    groupdf = groupdf[cols]
+
+    groupdf.set_index("Empid",inplace=True)
+
+    with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
+        groupdf.to_excel(writer,sheet_name="Total",index=True)
     #
 
+    jsdict = groupdf[["Empname","NetCur","GrossCur","GrossCurRetro","TaxesCur","DeductsCur","GrossPrevCur","Annual","Vehicle","Unexplained","Order"]].to_dict('index')
 
-    resdf = pd.DataFrame.from_dict(resdict)
-    resdf.sort_values(by=['Net'], ascending=False, inplace=True)
+    currdiff = grosscur.grosscur(level)
+    retrodiff = grossretro.grossretro(level)
 
-    resdict = resdf.to_dict('records')
-
-    print(resdict)
-
-    jsdict = {}
-    
-    for eachrecord in resdict:
-        empid = eachrecord["Empid"]
-        eachrecord.pop("Empid")
-        jsdict[empid] = eachrecord
+    for eachempid in jsdict:
+        jsdict[eachempid]["CurrDiff"]  = currdiff[eachempid] if eachempid in currdiff else ""
+        jsdict[eachempid]["RetroDiff"]  = retrodiff[eachempid] if eachempid in retrodiff else ""
     #
-
-
-    resdf.to_excel(xlwriter,sheet_name="Total",index=False)
 
     return jsdict
 

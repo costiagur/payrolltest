@@ -1,12 +1,12 @@
     #בדיקת סבירות של ניכוים לקופות
 
 import pandas as pd
+import custom
 
 def fundsdeduct(df,xlwriter,refmonth,prevmonth,level="0.03,0.15"):
     
-    unneeded = ("630","629","666","634","636","610","612","671","622","624","91030","91031","3203")
     cols = ["Empid","Empname","mn","Refdate","Elemtype","Elemtype_heb","Elem","Elem_heb","CurAmount"]
-    middf = df[(df["Division"] != 90)&(df["Elemtype"].isin(("addition components","voluntary deductions"))&(~df["Elem"].isin(unneeded))&(df["CurAmount"]!=0.0))][cols]
+    middf = df[(df["Division"] != 90)&(df["Elemtype"].isin(("addition components","voluntary deductions"))&(~df["Elem"].isin(custom.unneeded))&(df["CurAmount"]!=0.0))][cols]
     grouped = middf.groupby(by = ["Empid","Elemtype"],as_index=False,group_keys=True)
     groupeddf = grouped.sum("CurAmount")
 

@@ -1,5 +1,4 @@
 #סמלים שמופיעים פעם אחת
-import numpy as np
 import custom
 import pandas as pd
 
@@ -7,31 +6,27 @@ def semelonce(level="0.05"):
 
     level = float(level)
 
-    middf = custom.DF101.loc[(custom.DF101["Division"] != custom.pensiondepartment)&(custom.DF101["Refdate"]==custom.REFMONTH)&(custom.DF101["CurAmount"] != 0)&(custom.DF101["Elemtype"] == "addition components")]
+    middf = custom.DF101.loc[(custom.DF101["Division"]!= 90)&(custom.DF101["Refdate"]==custom.REFMONTH)&(custom.DF101["CurAmount"]!=0)&(custom.DF101["Elemtype"]=="addition components")&(~custom.DF101["Elem"].isin((custom.annualvehicle+custom.miluim))),["Rank","Dirug","Elem","Elem_heb","CurAmount","Empid"]]
 
-    empinranks = middf[["Rank","Empid"]].groupby(by = ["Rank"],as_index=False,group_keys=True).nunique("Empid")
+    groupdf = middf.groupby(by=["Rank","Dirug","Elem"],as_index=False,group_keys=True).count()
+    groupempdf = middf.groupby(by="Rank",as_index=False,group_keys=True).nunique()
 
-    empinranks["cutoff"] = empinranks.apply(lambda row: np.round(row["Empid"]*level,0),axis=1)
+    groupempdf["bench"] = groupempdf["Empid"] * level
 
-    uniqsemels = middf[middf["Rank"].isin(empinranks.loc[empinranks["cutoff"] > 0,"Rank"])].groupby(by = ["Rank","Elem"],as_index=False,group_keys=True).count()
+    def getbench(row):
+        return groupempdf.loc[groupempdf["Rank"] == row["Rank"],"bench"].item()
 
-    uniqsemels["uniq"] = uniqsemels.apply(lambda row:empinranks.loc[empinranks["Rank"]==row["Rank"],"cutoff"].item(),axis=1)
-    uniqsemels["todrop"] = uniqsemels.apply(lambda row:True if row["Empid"] > row["uniq"] else False,axis=1)
+    groupdf["bench"] = groupdf.apply(getbench, axis=1)
 
-    uniqsemels.drop(uniqsemels[uniqsemels["todrop"] == True].index,inplace=True)
+    filterdf = groupdf.loc[(groupdf["CurAmount"]<4)&(groupdf["CurAmount"]<groupdf["bench"])]
 
-    uniqsemels.drop(["todrop","uniq"],axis=1,inplace=True)
+    def filterrow(row):
+        return filterdf.loc[(filterdf["Elem"] == row["Elem"])&(filterdf["Rank"] == row["Rank"])].shape[0] > 0
 
-    def isuniq(row):
-        res = uniqsemels.loc[(uniqsemels["Rank"] == row["Rank"])&(uniqsemels["Elem"] == row["Elem"]),"Elem"]
-        if res.size != 0:
-            return True
-        else:
-            return False
-        #
-    #
- 
-    resdf = middf.loc[middf.apply(isuniq,axis=1) == True]
+
+    middf["filter"] = middf.apply(filterrow,axis=1)
+
+    resdf = middf.loc[middf["filter"] == True]
 
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
         resdf.to_excel(writer,sheet_name="semel_once",index=False)

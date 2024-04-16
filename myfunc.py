@@ -28,6 +28,7 @@ from semeltwice import semeltwice
 from before9months import before9months
 from fundsreplace import fundsreplace
 from NonreasonableNett import NonreasonableNett
+from semel_without import semel_without
 import custom
 from loaddf import loaddf
 
@@ -43,12 +44,12 @@ def myfunc(queryobj):
         if request == "fileupload":
             res = loaddf(filesdict)
             replymsg = json.dumps(["uploadedrows",res]).encode('UTF-8')
-                
-        elif request == "salarycheck":
-            
+
             custom.xlresfile = ".\\drafts\\" + custom.REFMONTH.strftime("%Y-%m") + ".xlsx"
             wb = Workbook()
             wb.save(custom.xlresfile)
+                
+        elif request == "salarycheck":
 
             reqtest = postdict["reqtest"]
             reqlevel = postdict["reqlevel"]
@@ -75,6 +76,7 @@ def myfunc(queryobj):
             checkpool["before9months"] = [before9months,"מספר עובדים עם ממשק שלילי להפרשות או ניכויים בדיעבד מעל 9 חודשים"]
             checkpool["totalrep"] = [totalrep,"דוח השוואה כולל"]
             checkpool["NonreasonableNett"] = [NonreasonableNett,"סכומי נטו לא סבירים ביחס רוחבי"]
+            checkpool["semel_without"] = [semel_without,"עובדים ללא סמל שיש לשאר עובדים בדירוג"]
 
 
             if reqtest == "grosscur" or reqtest == "grossretro":

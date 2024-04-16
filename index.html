@@ -96,9 +96,6 @@
               <td>טען והרץ בדיקות</td><td><input type="button" class="w3-btn w3-border w3-round" value="הפעל" onclick="myfunc.upload()"></td>
             </tr>
             <tr>
-              <td>הרץ בדיקות</td><td><input type="button" class="w3-btn w3-border w3-round" value="הפעל" onclick="myfunc.submit()"></td>
-            </tr>
-            <tr>
               <td>בחירה\הסרה בדיקות</td><td><input type="button" id="remchecks" class="w3-btn w3-border w3-round" value="הסרה" onclick="myfunc.removechecks()" data-removecheck="0"></td>
             </tr>
           </table>
@@ -290,6 +287,16 @@
         <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
           <label for="semel_hourdeduct_level">רף שעות</label>
           <input type="text" id="semel_hourdeduct_level" value="100" class="w3-input">
+        </div>
+      </div>
+      <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+        <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <input type="checkbox" id="semel_without" value="semel_without" class="w3-check" checked />
+          <label for="semel_without">סמלי שכר שחסרים לפי דירוג</label>
+        </header>
+        <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <label for="semel_without_level">אחוז עובדים ללא סמל</label>
+          <input type="text" id="semel_without_level" value="0.05" class="w3-input">
         </div>
       </div>
     </div>

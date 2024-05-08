@@ -313,7 +313,7 @@ myfunc.resulttable = function(resobj){ //request can be insert or update
             else if (eachkey == "RetroDiff"){
                             
                 if (Object.keys(subobj.RetroDiff).length != 0){ //check if it is not an empty object 
-                    retrobody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th><th>סכום</th></tr></thead><tbody>`
+                    retrobody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th></tr></thead><tbody>`
  
                     for (subkey in subobj.RetroDiff){
                         retrobody += "<tr>"

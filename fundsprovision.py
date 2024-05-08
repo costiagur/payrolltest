@@ -11,7 +11,7 @@ def fundsprovision(level=""):
     prevyear = pd.to_datetime(custom.REFMONTH) + pd.DateOffset(months = -12)
 
     middf = custom.DF101.loc[(custom.DF101["Division"] != 90)&(custom.DF101["Refdate"]==custom.REFMONTH)&((custom.DF101["Elemtype"].isin(("addition components","provision components"))|(custom.DF101["Elem"]==custom.takzivit))&(~custom.DF101["Elem"].isin(custom.nonpension))&(custom.DF101["CurAmount"]!=0.0)),cols]
-    middf["FirstYear"] = middf.apply(lambda row: 1 if row["Startdate"] > prevyear and row["Rank"] in custom.edufund_fromsecondyear else 0,axis=1)
+    middf["FirstYear"] = middf.apply(lambda row: 1 if row["Startdate"] > prevyear and row["Rank"] in custom.edufund_fromsecondyear else 0,axis=1) #in case of non eligible for edu fund during first year
     middf["Takzivit"] = middf.apply(lambda row: 1 if row["Elem"]=="30501" else 0,axis=1)
     middf["Provision"] = middf.apply(lambda row: row["CurAmount"] if row["Elemtype"] == "provision components" else 0,axis=1)
     middf["Addition"] = middf.apply(lambda row: row["CurAmount"] if row["Elemtype"] == "addition components" else 0,axis=1)

@@ -17,12 +17,13 @@ def licinsveh(level="1779,1750,7000"):
     insamount = float(levellist[2])
 
     groupdf = middf.groupby(by = ["Empid","Empname"],as_index=False,group_keys=True).sum(("Lic","Inshova","Instotal"))
+    filteredempid = groupdf.loc[(groupdf["Lic"]>licamount)|(groupdf["Inshova"]>hovaamount)|(groupdf["Instotal"]>insamount),"Empid"].unique()
 
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
-        groupdf.loc[(groupdf["Lic"]>licamount)|(groupdf["Inshova"]>hovaamount)|(groupdf["Instotal"]>insamount)].to_excel(writer,sheet_name="RishayonBituahRehev",index=False)
+        middf.loc[middf["Empid"].isin(filteredempid)].to_excel(writer,sheet_name="RishayonBituahRehev",index=False)
     #  
 
 
-    return len(groupdf.loc[(groupdf["Lic"]>licamount)|(groupdf["Inshova"]>hovaamount)|(groupdf["Instotal"]>insamount),"Empid"].unique())
+    return len(filteredempid)
 #
     

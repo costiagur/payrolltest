@@ -12,9 +12,11 @@ def semel_hourdeduct(level="100"):
     groupdf = middf.groupby(by=["Empid","Empname"],as_index=False,group_keys=True).sum(["Nett","Hourdeduct"])
     filtereddf = groupdf.loc[((groupdf["Nett"]<1000)&(groupdf["Hourdeduct"]>10))|(groupdf["Hourdeduct"]>level),"Empid"]
     
+    middf.rename(columns={"Empid":"מספר עובד","Empname":"שם","Refdate":"תאריך ערך","Nett":"נטו","Hourdeduct":"הפחתת שעות"},inplace=True)
+
     
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
-        middf.loc[(middf["Empid"].isin(filtereddf))&((middf["Hourdeduct"] != 0)|(middf["Nett"] != 0)),["Empid","Empname","Refdate","Nett","Hourdeduct"]].to_excel(writer,sheet_name="large_hourdeduct",index=False)
+        middf.loc[(middf["מספר עובד"].isin(filtereddf))&((middf["הפחתת שעות"] != 0)|(middf["נטו"] != 0)),["מספר עובד","שם","תאריך ערך","נטו","הפחתת שעות"]].to_excel(writer,sheet_name="הפחתת שעות גדולה",index=False)
     #    
 
     return len(filtereddf.unique())

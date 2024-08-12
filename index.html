@@ -36,11 +36,7 @@
       #reptb th {width:5.5%}
 
       td.displaytable {
-        background-color: rgba(10, 233, 10, 0.432);
-      }
-
-    td.displaytable:hover::after{
-        content: url("toggle.png");
+        background-color: rgba(10, 233, 10, 0.24);
       }
     
     #repthead th {position: sticky; top: 0; background-color: whitesmoke; opacity:1; border:darkgrey 1px}
@@ -92,14 +88,14 @@
       <div class="w3-row-padding w3-section w3-card-4">
           <table>
             <tr>
-              <td>טען והרץ בדיקות</td><td><input type="button" class="w3-btn w3-border w3-round" value="הפעל" onclick="myfunc.upload()"></td>
+              <td>טען והרץ בדיקות</td><td><input type="button" class="w3-btn w3-border w3-round" style="padding: 10px 24px;" value="הפעל" onclick="myfunc.upload()"></td>
             </tr>
             <tr>
-              <td>בחירה\הסרה בדיקות</td><td><input type="button" id="remchecks" class="w3-btn w3-border w3-round" value="הסרה" onclick="myfunc.removechecks()" data-removecheck="0"></td>
+              <td>בחירה\הסרה בדיקות</td><td><input type="button" id="remchecks" class="w3-btn w3-border w3-round" style="padding: 10px 24px;" value="הסרה" onclick="myfunc.removechecks()" data-removecheck="0"></td>
             </tr>
           </table>
       </div>
-      <div class="w3-row-padding w3-section w3-card-4">
+      <!--<div class="w3-row-padding w3-section w3-card-4">
         <div>
             דוח מסלקה 2016
         </div>
@@ -109,7 +105,7 @@
         <div>
           <input type="button" class="w3-button w3-border w3-round" value="הרצה" onclick="myfunc.submitfunds()">
         </div>
-      </div>
+      </div>-->
     </div>
           
     <div class="w3-cell" style="width:80%">
@@ -176,6 +172,15 @@
           </header>
           <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
             <input type="text" id="NonreasonableNett_level" value="" >
+          </div>  
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="nettnegative" value="nettnegative" class="w3-check" checked />
+            <label for="nettnegative">נטו שלילי</label>  
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
+            <input type="text" id="nettnegative_level" value="" >
           </div>  
         </div>
       </div>
@@ -330,11 +335,10 @@
           <th>שם עובד</th>
           <th onclick='myfunc.sort(this)'>נטו</th>
           <th onclick='myfunc.sort(this)'>ברוטו שוטף</th>
-          <th onclick='myfunc.sort(this)'>ברוטו הפרשים</th>
+          <th onclick='myfunc.sort(this)'>ברוטו קודם</th>
           <th onclick='myfunc.sort(this)'>ניכויי חובה</th>
           <th onclick='myfunc.sort(this)'>ניכויי זכות</th>
-          <th onclick='myfunc.sort(this)'>שוטף חודש קודם</th>
-          <th onclick='myfunc.sort(this)'>הפרש חד שנתי</th>
+          <th onclick='myfunc.sort(this)'>תשלום שנתי</th>
           <th onclick='myfunc.sort(this)'>הפרש רכב</th>
           <th onclick='myfunc.sort(this)'>הפרש לא מוסבר</th>
           <th style='width:16.6%'>הוראה</th>
@@ -347,7 +351,6 @@
       </tbody>
     </table>
   </div>
-    
   </body>
 
   <script src='uiclient.js'></script>

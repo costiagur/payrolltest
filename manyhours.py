@@ -12,10 +12,11 @@ def manyhours(level="264"):
 
     groupdf = middf.groupby(by = ["Empid","Empname","mn"],as_index=False,group_keys=True).sum("CurQuantity")
 
+    groupdf.rename(columns={"Empid":"מספר עובד","Empname":"שם","mn":"מנ","CurQuantity":"כמות שעות שוטפת","WorkHours":"שעות עבודה"},inplace=True)
 
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
-        groupdf.loc[groupdf["CurQuantity"] >=level].to_excel(writer,sheet_name="manyhours",index=False)
+        groupdf.loc[groupdf["כמות שעות שוטפת"] >=level].to_excel(writer,sheet_name="מספר שעות רב",index=False)
     #
  
-    return len(groupdf.loc[groupdf["CurQuantity"] >=level,"Empid"].unique())
+    return len(groupdf.loc[groupdf["כמות שעות שוטפת"] >=level,"מספר עובד"].unique())
 #

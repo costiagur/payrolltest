@@ -1,34 +1,25 @@
 import custom
 import pandas as pd
+import numpy as np
 
 #יש דיווח של שעות עבודה לתלוש אך אין תשלום סמל שכר יסוד
 
-def hoursWithoutYesod(level="8.5"):
+def hoursWithoutYesod(level=""):
 
-    level = float(level)
-    
-    DF1_100 = custom.DF101.loc[(custom.DF101["Elem"].isin(custom.yesodandhours))&(custom.DF101["CurAmount"] > 0)&(custom.DF101["Refdate"] == custom.REFMONTH)&(custom.DF101["Division"] != custom.pensiondepartment),["Empid","Empname","mn","Refdate","Empid_mn","Elem","CurAmount"]]
+    Elem1_100 = custom.DF101.loc[(custom.DF101["Elem"].isin(custom.yesodandhours))&(custom.DF101["Refdate"] == custom.REFMONTH)&(custom.DF101["Division"] != custom.pensiondepartment),"Empid_mn"]
 
-    DFHOURS100 = custom.DFHOURS.copy()
+    hours = custom.DFHOURS.loc[custom.DFHOURS["WorkHours"] > 0,"Empid_mn"]
 
-    DFHOURS100["Elem"] = "100"
+    dataNotin = np.isin(hours,Elem1_100,invert=True) #find which are present in hours and not in DF101
+    resdf = custom.DFHOURS.loc[dataNotin].copy()
 
-    DFHOURS1_100 = pd.concat([custom.DFHOURS,DFHOURS100],ignore_index=True)    
+    resdf.rename(columns={"Empid":"מספר עובד","Empname":"שם","mn":"מנ","CurAmount":"סכום שוטף","Refdate":"תאריך ערך","WorkHours":"שעות עבודה"},inplace=True)
 
-    merged = pd.merge(DFHOURS1_100,DF1_100,how="left", on=["Empid","Empname","mn","Empid_mn","Refdate","Elem"])
-
-    merged.drop(columns="Empid_mn",inplace=True)
-
-    merged1 = merged[(merged["CurAmount"].isna())&(merged["Elem"] == "1")]
-    merged100 = merged[(merged["CurAmount"].isna())&(merged["Elem"] == "100")]
-
-    resdf = pd.merge(merged1,merged100,how="inner",on=["Empid","Empname","mn","Refdate"])
-
-    resdf
+    resdf.drop(columns=["Empid_mn","Elem"],inplace=True)
 
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
-        resdf.to_excel(writer,sheet_name="HoursWithoutYesod",index=False)
+        resdf.to_excel(writer,sheet_name="שעות ללא יסוד",index=False)
     #    
     
-    return len(resdf["Empid"])
+    return len(resdf["מספר עובד"])
 

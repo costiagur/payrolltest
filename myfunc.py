@@ -6,6 +6,7 @@ import numpy as np
 from io import BytesIO
 from os import unlink
 import concurrent.futures
+from datetime import date
 from openpyxl import Workbook
 from totalrep import totalrep
 from pubtrasport_nowork import pubtrasport_nowork
@@ -31,6 +32,7 @@ from NonreasonableNett import NonreasonableNett
 from semel_without import semel_without
 import custom
 from loaddf import loaddf
+from nettnegative import nettnegative
 
 CODESTR = "hazuticheck"
 
@@ -45,10 +47,13 @@ def myfunc(queryobj):
             res = loaddf(filesdict)
             replymsg = json.dumps(["uploadedrows",res]).encode('UTF-8')
 
-            custom.xlresfile = ".\\drafts\\" + custom.REFMONTH.strftime("%Y-%m") + ".xlsx"
+            custom.REFMONTH = custom.DF101["Refdate"].max()
+            custom.PREVMONTH = pd.to_datetime(custom.REFMONTH) + pd.DateOffset(months = -1)
+
+            custom.xlresfile = r'drafts\report_' + custom.REFMONTH.strftime("%Y-%m") + '_' + date.today().strftime('%Y%m%d') + ".xlsx"
             wb = Workbook()
             wb.save(custom.xlresfile)
-                
+            
         elif request == "salarycheck":
 
             reqtest = postdict["reqtest"]
@@ -77,7 +82,7 @@ def myfunc(queryobj):
             checkpool["totalrep"] = [totalrep,"דוח השוואה כולל"]
             checkpool["NonreasonableNett"] = [NonreasonableNett,"סכומי נטו לא סבירים ביחס רוחבי"]
             checkpool["semel_without"] = [semel_without,"עובדים ללא סמל שיש לשאר עובדים בדירוג"]
-
+            checkpool["nettnegative"] = [nettnegative,"עובדים עם נטו שלילי"]
 
             if reqtest == "grosscur" or reqtest == "grossretro":
                 pass

@@ -3,116 +3,84 @@ import pandas as pd
 import numpy as np
 import custom
 
-def grosscur(level="0.2,2000"):
+def grosscur(empid):    
+
+    middf =  custom.DF101.loc[custom.DF101["Empid"].eq(empid)&(custom.DF101["Refdate"] >= custom.PREVMONTH)&((custom.DF101["Elemtype"] == "addition components")|(custom.DF101["Elem_heb"] == custom.dayvalue)|(custom.DF101["Elem"] == custom.semelratio)),["Empid","Refdate","Elem","Elem_heb","PrevAmount","CurAmount","Empid_mn","Elemtype"]]
+    middf["CurAmount"] = middf.apply(lambda row: row["CurAmount"] if row["Refdate"] == custom.REFMONTH else 0,axis=1) #nullify current retro payments
     
-    levellist = level.split(",")
+    groupdf = middf.groupby(by=["Empid","Elem","Elem_heb","Empid_mn","Elemtype"],as_index=False,group_keys=True).sum(["PrevAmount","CurAmount"])
+    
+    #calculate pensionbase for each mn
 
-    cutoffrate = min([float(eachlevel) for eachlevel in levellist])
-    cutoffamount = max([float(eachlevel) for eachlevel in levellist])
+    for each_mn in groupdf["Empid_mn"].unique():
+    
+        prevrateS = groupdf.loc[(groupdf['Empid_mn']==each_mn)&(groupdf['Elem'] == custom.semelratio),'PrevAmount']
+        prevrate = prevrateS.item() if prevrateS.size > 0 else 0
+        prevhourvalS = groupdf.loc[(groupdf['Empid_mn']==each_mn)&(groupdf["Elem_heb"] == custom.dayvalue),'PrevAmount']
+        prevhourval = prevhourvalS.item() if prevhourvalS.size > 0 else 0
+        currateS = groupdf.loc[(groupdf['Empid_mn']==each_mn)&(groupdf['Elem'] == custom.semelratio),'CurAmount']
+        currate = currateS.item() if currateS.size > 0 else 0
 
-    currentemp = [None]
+        basedict = {"Empid": [empid],
+                "Elem": [99999],
+                "Elem_heb": ['בסיס פנסיה מחושב'],
+                "Empid_mn":[each_mn],
+                "Elemtype": ['additional data'], 
+                "PrevAmount": [22*prevhourval*prevrate],
+                "CurAmount": [22*prevhourval*currate]}
+                
+        basedf = pd.DataFrame.from_dict(basedict) 
 
-    basedict = dict()
-    basedict["Empid"] = []
-    basedict["Empname"] = []
-    basedict["Elemtype"] = []
-    basedict["Elem"] = []
-    basedict["Elem_heb"] = []
-    basedict["Empid_mn"] = []
-    basedict["PrevAmount"] = []
-    basedict["CurCur"] = []
-    basedict["Diff"] = []
-    basedict["Significant"] = []
+        groupdf = pd.concat([groupdf,basedf], ignore_index=True)
+    #
 
-    middf =  custom.DF101.loc[(custom.DF101["Refdate"] >= custom.PREVMONTH)&((custom.DF101["Elemtype"] == "addition components")|(custom.DF101["Elem_heb"] == custom.dayvalue)|(custom.DF101["Elem"] == custom.semelratio)),["Empname","Empid","Refdate","Elem","Elem_heb","PrevAmount","CurAmount","Empid_mn","Elemtype"]]
+    groupdf["Diff"] = groupdf["CurAmount"] - groupdf["PrevAmount"]
 
-    def highdiff(row):
+
+    def significant_diff(row):
         res = 0
         
-        if row["Elem"] not in (custom.annualelement + custom.byreport):
-        
-            if abs(row['Diff']) >= cutoffamount:
-                res = row['Diff']
-        
-            elif abs(row['Diff']) / abs(highdf.loc[highdf['Empid_mn'] == row['Empid_mn'],'Diff'].item()) >= cutoffrate:
-                res = row['Diff']
-        
-            else:
-                res = 0
+        if row["Elem"] not in (custom.annualelement + custom.byreport + (custom.semelratio, custom.dayvalue)): #סמלים שלא בבסיס הפנסיה ולא שנתיים
+            
+
+            if abs(row['Diff']) >= 100:
+                res = np.round(row['Diff'],0)
+ 
         #
         
-        elif row["Elem"] in custom.byreport:
-            prevrate = groupdf.loc[(groupdf['Empid_mn']==row['Empid_mn'])&(groupdf['Elem'] == custom.semelratio),'PrevAmount'].item()
-            prevhourval = groupdf.loc[(groupdf['Empid_mn']==row['Empid_mn'])&(groupdf["Elem_heb"] == custom.dayvalue),'PrevAmount'].item()
+        elif row["Elem"] in custom.byreport: #סמלים בביס הפנסיה שדורשים דווח של חשב שכר
+
+            prevrateS = groupdf.loc[(groupdf['Empid_mn']==row['Empid_mn'])&(groupdf['Elem'] == custom.semelratio),'PrevAmount']
+            prevrate = prevrateS.item() if prevrateS.size > 0 else 0
+            prevhourvalS = groupdf.loc[(groupdf['Empid_mn']==row['Empid_mn'])&(groupdf["Elem_heb"] == custom.dayvalue),'PrevAmount']
+            prevhourval = prevhourvalS.item() if prevhourvalS.size > 0 else 0
             
             if prevrate != 0:
-                currate = groupdf.loc[(groupdf['Empid_mn']==row['Empid_mn'])&(groupdf['Elem'] == custom.semelratio),'CurCur'].item()   
-                updatedamount = 22*prevhourval / prevrate * currate
+                currateS = groupdf.loc[(groupdf['Empid_mn']==row['Empid_mn'])&(groupdf['Elem'] == custom.semelratio),'CurAmount']   
+                currate = currateS.item() if currateS.size > 0 else 0
+                updatedamount = 22*prevhourval / prevrate * currate #hypotetical amount based on chages in position rate
             else:
-                updatedamount = 22*prevhourval
-                currate = 0
-            #
-            
-            if abs(row['Diff']-updatedamount) >= cutoffamount:
-                res = row['Diff']
-        
-            elif abs(row['Diff']-updatedamount) / abs(highdf.loc[highdf['Empid_mn'] == row['Empid_mn'],'Diff'].item()) >= cutoffrate:
-                res = row['Diff']
-        
-            else:
-                res = 0
-            #
-        
-            if row['Empid_mn'] !=currentemp[0] and res != 0:
-
-                basedict["Empid"] = basedict["Empid"] + [row['Empid']]
-                basedict["Empname"] = basedict["Empname"] + [row['Empname']]
-                basedict["Elemtype"] = basedict["Elemtype"] + ['additional data']
-                basedict["Elem"] = basedict["Elem"] + [0]
-                basedict["Elem_heb"] = basedict["Elem_heb"] + ['בסיס פנסיה מחושב']
-                basedict["Empid_mn"] = basedict["Empid_mn"] + [row['Empid_mn']]
-                basedict["PrevAmount"] = basedict["PrevAmount"] + [22*prevhourval*prevrate]
-                basedict["CurCur"] = basedict["CurCur"] + [22*prevhourval*currate]
-                basedict["Diff"] = basedict["Diff"] + [22*prevhourval * (currate - prevrate)]
-                basedict["Significant"] = basedict["Significant"] + [22*prevhourval * (currate - prevrate)]
-
-                currentemp[0] = row['Empid_mn']
-                
+                updatedamount = 0
             #
 
-        return np.round(res,0)
+            if abs(row['Diff']-updatedamount) >= 100: #if the differences is grater that one that stems from position rate changes, analyze it
+                res = np.round(row['Diff'],0)
+
+            #
+        
+        return res
     #
 
+    groupdf["Currentdiff"] = groupdf.apply(significant_diff,axis=1)
 
-    middf["CurCur"] = middf.apply(lambda row: row["CurAmount"] if row["Refdate"] == custom.REFMONTH else 0,axis=1)
+    resdf = 0
 
-    groupdf = middf.groupby(by = ["Empid","Empname","Elemtype","Elem", "Elem_heb","Empid_mn"],as_index=False,group_keys=True).sum(['PrevAmount','CurCur'])
-
-    groupdf["Diff"] = groupdf['CurCur'] - groupdf['PrevAmount']
-
-    sumdf = groupdf[groupdf['Elemtype'] == "addition components"].groupby(by = "Empid_mn",as_index=False,group_keys=True).sum('Diff')
-
-    highdf = sumdf.loc[(sumdf['Diff'] >= cutoffamount)|(sumdf['Diff'] <= -cutoffamount)] 
-
-    groupdf = groupdf.loc[groupdf["Empid_mn"].isin(highdf["Empid_mn"].unique())]
-
-    groupdf['Significant'] = groupdf.apply(highdiff, axis=1)
-
-    basedictdf = pd.DataFrame.from_dict(basedict)
-
-    finpd = pd.concat([groupdf,basedictdf], ignore_index = True)
-
-    finpd.sort_values(by=["Empid_mn","Elemtype","Elem"],inplace=True,ignore_index=True)
-
-    jsdict = {}
-
-    for eachindex in finpd["Empid"].unique():
-        jsdict[eachindex] = finpd.loc[(finpd['Significant']!= 0)&(finpd['Empid']== eachindex),["Elem_heb","Significant"]].to_dict('records')
-    
-    with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
-        finpd.loc[finpd['Significant']!= 0].to_excel(writer,sheet_name="currgross_diff")
+    if groupdf.loc[groupdf['Currentdiff']!= 0,["Elem_heb","Currentdiff"]].empty:
+        resdict = {"Empid":[empid],"Elem_heb":["0"],"Currentdiff":[0]}
+        resdf = pd.DataFrame.from_dict(resdict)
+    else:
+        resdf = groupdf.loc[groupdf['Currentdiff']!= 0,["Empid","Elem_heb","Currentdiff"]]
     #
 
-
-    return jsdict
+    return resdf
 #

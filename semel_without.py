@@ -38,8 +38,11 @@ def semel_without(level="0.05"):
 
     resdf.drop(["Dirug","CurAmount","Empid","required"],axis=1,inplace = True)
 
+    resdf.rename(columns={"Empid":"מספר עובד","Empname":"שם","Elem":"מספר סמל","Elem_heb":"סמל שכר","EmpsWithout":"עובדים ללא סמל","EmpsNum":"מספר עובדים"},inplace=True)
+
+
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
-        resdf.to_excel(writer,sheet_name="semel_without",index=True)
+        resdf.to_excel(writer,sheet_name="ללא סמל",index=True)
     #   
 
     return resdf.shape[0]

@@ -1,10 +1,22 @@
 import pandas as pd
 import custom
 from io import BytesIO
+import os
 
 def loaddf(filesdict):
-    if custom.DF101 is not None:
-        pass
+
+    if not filesdict:
+        for eachfile in os.listdir("drafts"):
+            if eachfile == 'df101.pkl':
+                custom.DF101 = pd.read_pickle('drafts/df101.pkl')
+            elif eachfile == 'dfhours.pkl':
+                custom.DFHOURS = pd.read_pickle('drafts/dfhours.pkl')
+            else:
+                pass
+            #
+        #
+    #           
+                  
     else: 
         buff = BytesIO(filesdict['hazuti'][1])
 
@@ -13,7 +25,7 @@ def loaddf(filesdict):
             
         custom.DF101 = pd.read_csv(buff,sep='\t',header=3,encoding="cp1255",na_filter=True,skip_blank_lines=True,skiprows=[5],usecols=cols,parse_dates=['תאריך ערך','ת.ת. עבודה'],dayfirst=True)
                 
-        custom.DF101.rename(columns={"שם עובד":"Empname","מספר עובד":"Empid","מ.נ.":"mn","אגף":"Division","סכום":"PrevAmount","כמות":"PrevQuantity",custom.DF101.columns[16]:"CurAmount",custom.DF101.columns[17]:"CurQuantity","תאריך ערך":"Refdate","ת.ת. עבודה":"Startdate","סוג רכיב":"Elemtype_heb","שם רכיב":"Elem_heb","דרוג":"Dirug"},inplace=True)
+        custom.DF101.rename(columns={"שם עובד":"Empname","מספר עובד":"Empid","מ.נ.":"mn","אגף":"Division","סכום":"PrevAmount","כמות":"PrevQuantity",custom.DF101.columns[16]:"CurAmount",custom.DF101.columns[17]:"CurQuantity","תאריך ערך":"Refdate","ת.ת. עבודה":"Startdate","סוג רכיב":"Elemtype_heb","שם רכיב":"Elem_heb","דרוג":"Dirug","וותק":"vetek"},inplace=True)
 
         custom.DF101["Elem"] = custom.DF101["Elem_heb"].str.extract(r'^(\d+|עלות)\s-*')
         custom.DF101["Rank"] = custom.DF101["Dirug"].str.extract('(\d+)')
@@ -27,12 +39,6 @@ def loaddf(filesdict):
 
         custom.DF101.dropna(axis=0,subset=['PrevAmount','PrevQuantity','CurAmount','CurQuantity'],inplace=True)
                 
-        custom.REFMONTH = custom.DF101["Refdate"].max()
-        custom.PREVMONTH = pd.to_datetime(custom.REFMONTH) + pd.DateOffset(months = -1)
-    #
-    if custom.DFHOURS is not None:
-        pass
-    else:
         buff = BytesIO(filesdict['hoursquery'][1])
 
         custom.DFHOURS = pd.read_csv(buff,sep='\t',header=0,encoding="cp1255",na_filter=True,skip_blank_lines=True,parse_dates=['תוקף עד','תוקף מ'],dayfirst=True,usecols=list(range(0,6,1)))
@@ -43,7 +49,8 @@ def loaddf(filesdict):
         #custom.DF101["CurQuantity"] =custom.DF101.apply(lambda row: custom.DFHOURS.loc[(custom.DFHOURS["Empid_mn"] == row["Empid_mn"]),"Quantity"].sum() if row["Refdate"] == custom.REFMONTH and row["Elem"] == custom.yesod else row["CurQuantity"],axis=1)
 
         custom.DF101 = pd.merge(custom.DF101,custom.DFHOURS,how="left",on=["Empid_mn","Elem","Empid","mn","Empname","Refdate"])
-
+        pd.to_pickle(custom.DF101,r'drafts\df101.pkl')
+        pd.to_pickle(custom.DFHOURS,r'drafts\dfhours.pkl')
 
     #
 

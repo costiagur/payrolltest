@@ -27,10 +27,11 @@ def before9months(level=""):
     #
     
     resdf = pd.DataFrame.from_dict(resdict)
+    resdf.rename(columns={"Empid":"מספר עובד","Empname":"שם","Fund":"קופה","Date":"תאריך","Values":"סכום"},inplace=True)
     
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
-        resdf.to_excel(writer,sheet_name="Kupot_9_months",index=False)
+        resdf.to_excel(writer,sheet_name="ניכוי קופות מעל 9 חודשים",index=False)
     #      
 
-    return len(resdf["Empid"].unique())
+    return len(resdf["מספר עובד"].unique())
 #

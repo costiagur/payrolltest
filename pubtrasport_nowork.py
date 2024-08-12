@@ -11,6 +11,7 @@ def pubtrasport_nowork(level="0"):
     diffarr = numpy.setdiff1d(arrpubtrans,arryesod,assume_unique=True)
     
     resdf = custom.DF101[(custom.DF101["Empid_mn"].isin(diffarr))&(custom.DF101["Elem"].isin(custom.yesodandhours+custom.pubtransport))][["Empid","Empname","mn","Elem_heb","CurAmount","CurQuantity"]]
+    resdf.rename(columns={"Empid":"מספר עובד","Empname":"שם עובד","mn":"מנ","Elem_heb":"סמל","CurAmount":"סכום","CurQuantity":"כמות"},inplace=True)
 
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
         resdf.to_excel(writer,sheet_name="pubtrasport_no_work",index=False)

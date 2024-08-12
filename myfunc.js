@@ -186,7 +186,7 @@ myfunc.sendrequest = function(fdata){
     
         xhr.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {   
-                console.log(this.responseText)
+                //console.log(this.responseText)
     
                 resobj = JSON.parse(this.responseText);
                 resolve(resobj)    
@@ -292,12 +292,13 @@ myfunc.resulttable = function(resobj){ //request can be insert or update
                             
                 if (Object.keys(subobj.CurrDiff).length != 0){ //check if it is not an empty object
                     currtbody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש מהותי</th></tr></thead><tbody>`
-                                    
-                    for (subkey in subobj.CurrDiff){
+                    console.log(subobj.CurrDiff)
+                    console.log(subobj.CurrDiff.Elem_heb)
+
+                    for (i=0;i<subobj.CurrDiff.Elem_heb.length;i++){
                         currtbody += "<tr>"
-                        currtbody += `<td>${subobj.CurrDiff[subkey].Elem_heb}</td>`
-                        //currtbody += `<td>${subobj.CurrGrossData[subkey].Diff}</td>`
-                        currtbody += `<td>${subobj.CurrDiff[subkey].Significant}</td>`
+                        currtbody += `<td>${subobj.CurrDiff.Elem_heb[i]}</td>`
+                        currtbody += `<td>${subobj.CurrDiff.Currentdiff[i]}</td>`
                         currtbody += "</tr>"
                     }
     
@@ -315,11 +316,10 @@ myfunc.resulttable = function(resobj){ //request can be insert or update
                 if (Object.keys(subobj.RetroDiff).length != 0){ //check if it is not an empty object 
                     retrobody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th></tr></thead><tbody>`
  
-                    for (subkey in subobj.RetroDiff){
+                    for (i=0;i<subobj.RetroDiff.Elem_heb.length;i++){
                         retrobody += "<tr>"
-                        retrobody += `<td>${subobj.RetroDiff[subkey].Elem_heb}</td>`
-                        //retrobody += `<td>${subobj.RetroGrossData[subkey].Diff}</td>`
-                        retrobody += `<td>${subobj.RetroDiff[subkey].Significant}</td>`
+                        retrobody += `<td>${subobj.RetroDiff.Elem_heb[i]}</td>`
+                        retrobody += `<td>${subobj.RetroDiff.Retrodiff[i]}</td>`
                         retrobody += "</tr>"
                     }
 

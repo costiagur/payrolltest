@@ -4,10 +4,10 @@ class MYSQLDB:
     
     def __init__(self):
         self.mydb = mysql.connector.connect(
-        host="XXX.XXX.XXX.XXX",
-        user="XXXX",
-        password="XXXX",
-        database="XXXX")
+        host="10.76.76.77",
+        user="kostya_hrorder",
+        password="yJSVm)W[si*yDXO8",
+        database="kostya_hrorder")
 
         self.curs = self.mydb.cursor()
     #

@@ -221,7 +221,7 @@ myfunc.submit = async function(){ //request can be insert or update
             }
             else{
                 if (resobj[0] == "totalrep"){
-                    myfunc.response("טבלת השוואה מוכנה","")   
+                    myfunc.response(resobj[2],"")   
                     myfunc.resulttable(resobj[1])
                 }
                 else{
@@ -235,6 +235,7 @@ myfunc.submit = async function(){ //request can be insert or update
     const resobj = await myfunc.sendrequest(fdata)
     if (resobj[0] == "testfile"){
         myfunc.download(resobj[1],resobj[2])
+        myfunc.response("בדיקות הסתיימו","")
     }
 
     document.getElementById("loader").style.display='none'; //close loader
@@ -242,14 +243,18 @@ myfunc.submit = async function(){ //request can be insert or update
 
 }
 //************************************************************************************************ */
-myfunc.upload = async function(){
+myfunc.upload = async function(reqfiletype="new"){
     var fdata = new FormData();
 
     fdata.append("request","fileupload");   
 
-    fdata.append("hazuti",document.getElementById("hazuti").files[0]);
-    fdata.append("hoursquery",document.getElementById("hoursquery").files[0]);
+    fdata.append("prevhazuti",document.getElementById("prevhazuti").files[0]);
+    fdata.append("currhazuti",document.getElementById("currhazuti").files[0]);
+    fdata.append("hoursquery1313",document.getElementById("hoursquery1313").files[0]);
+    fdata.append("hoursquery1307",document.getElementById("hoursquery1307").files[0]);
 
+    fdata.append("reqfiletype",reqfiletype);
+    
     document.getElementById("loader").style.display='block'; //display loader
 
     const resobj = await myfunc.sendrequest(fdata)
@@ -267,75 +272,136 @@ myfunc.upload = async function(){
     }
 }
 //************************************************************************************************* */
+myfunc.adhoctest = async function(){
+    var fdata = new FormData();
+
+    fdata.append("request","adhoctest");
+    fdata.append("semel",document.getElementById("semel").value);
+    fdata.append("reqtype",document.getElementById("reqtype").value);
+    fdata.append("pensionin",(document.getElementById("pensionin").checked == true)?1:0);
+
+
+
+    document.getElementById("loader").style.display='block'; //display loader
+
+    const resobj = await myfunc.sendrequest(fdata)
+    if (resobj[0] == "Error"){
+        myfunc.msg( resobj[0], resobj[1])
+        document.getElementById("loader").style.display='none'; //close loader
+
+    }
+    else{
+       if (resobj[0] == "adhocfile"){
+        myfunc.download(resobj[1], resobj[2])
+        document.getElementById("loader").style.display='none'; //close loader
+       }
+    }
+}
+//************************************************************************************************ */
+myfunc.hazuti13m = async function(){
+    var fdata = new FormData();
+
+    fdata.append("request","hazuti13m");   
+    
+    fdata.append("hazuti13m",document.getElementById("hazuti13m").files[0]);
+    fdata.append("expectedplus",document.getElementById("expectedplus").value);
+    
+    document.getElementById("loader").style.display='block'; //display loader
+
+    const resobj = await myfunc.sendrequest(fdata)
+    if (resobj[0] == "Error"){
+        myfunc.msg(resobj[0], resobj[1])
+        document.getElementById("loader").style.display='none'; //close loader
+
+    }
+    else{
+       if (resobj[0] == "resanalysis"){
+           myfunc.download(resobj[1], resobj[2])
+           document.getElementById("loader").style.display='none'; //close loader
+       }
+    }
+}
+//************************************************************************************************* */
 myfunc.resulttable = function(resobj){ //request can be insert or update
  
-    reptbody = document.getElementById("reptbody")
+    tbody = ""
 
-    tbobj = resobj
+    for (eachid in resobj){
 
-    for (eachid in tbobj){
-        tbody += "<tr>"
-        tbody += `<td>${eachid}</td>`
-        currtbody = ""
-        retrobody = ""
+        console.log(resobj[eachid].Empname)
 
-        subobj = tbobj[eachid]
+        tbody += "<tr>";
+        tbody += `<td>${eachid}</td>`;
+        tbody += `<td>${resobj[eachid].Empname}</td>`;
+        tbody += `<td>${resobj[eachid].Pensioneer}</td>`;       
+        tbody += `<td>${Number(resobj[eachid].NetCur).toFixed(0)}</td>`;
+        tbody += `<td>${resobj[eachid].GrossCur.toFixed(0)}</td>`;
+        tbody += `<td>${resobj[eachid].GrossPrev.toFixed(0)}</td>`;
+        tbody += `<td>${resobj[eachid].TaxesCur.toFixed(0)}</td>`;
+        tbody += `<td>${resobj[eachid].DeductsCur.toFixed(0)}</td>`;
+        tbody += `<td>${resobj[eachid].Annual.toFixed(0)}</td>`;
+        tbody += `<td>${resobj[eachid].Vehicle.toFixed(0)}</td>`;
+        tbody += `<td>${resobj[eachid].Severance.toFixed(0)}</td>`;
+        tbody += `<td>${resobj[eachid].Unexplained.toFixed(0)}</td>`;
+        tbody += `<td>${resobj[eachid].Order}</td>`;
+        
+        currtbody = "";
+        retrobody = "";
 
-        for (eachkey in subobj){
-            if(eachkey == "Empname" || eachkey == "Order"){
-                tbody += `<td>${subobj[eachkey]}</td>`
-            } 
-            else if (eachkey != "CurrDiff" && eachkey != "RetroDiff"){
-                tbody += `<td>${parseInt(subobj[eachkey])}</td>`
-            }
-            else if (eachkey == "CurrDiff"){
-                            
-                if (Object.keys(subobj.CurrDiff).length != 0){ //check if it is not an empty object
-                    currtbody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש מהותי</th></tr></thead><tbody>`
-                    console.log(subobj.CurrDiff)
-                    console.log(subobj.CurrDiff.Elem_heb)
+        if (resobj[eachid].CurrDiff != ""){ //check if it is not an empty object
+                currtbody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש מהותי</th></tr></thead><tbody>`;
 
-                    for (i=0;i<subobj.CurrDiff.Elem_heb.length;i++){
-                        currtbody += "<tr>"
-                        currtbody += `<td>${subobj.CurrDiff.Elem_heb[i]}</td>`
-                        currtbody += `<td>${subobj.CurrDiff.Currentdiff[i]}</td>`
-                        currtbody += "</tr>"
-                    }
+                for (i=0;i<resobj[eachid].CurrDiff.Elem_heb.length;i++){
+                    currtbody += "<tr>";
+                    currtbody += `<td>${resobj[eachid].CurrDiff.Elem_heb[i]}</td>`;
+                    currtbody += `<td>${resobj[eachid].CurrDiff.Currentdiff[i]}</td>`;
+                    currtbody += "</tr>";
+                }
     
-                        currtbody += `</tbody></table></div></td>`
-                                
-                    }
-    
-                else{
-                    currtbody += `<td></td>`
-                }
-            }
-                         
-            else if (eachkey == "RetroDiff"){
-                            
-                if (Object.keys(subobj.RetroDiff).length != 0){ //check if it is not an empty object 
-                    retrobody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th></tr></thead><tbody>`
- 
-                    for (i=0;i<subobj.RetroDiff.Elem_heb.length;i++){
-                        retrobody += "<tr>"
-                        retrobody += `<td>${subobj.RetroDiff.Elem_heb[i]}</td>`
-                        retrobody += `<td>${subobj.RetroDiff.Retrodiff[i]}</td>`
-                        retrobody += "</tr>"
-                    }
-
-                    retrobody += `</tbody></table></div></td>`
-                }
-                else{
-                    retrobody += `<td></td>`
-                }
-            }
+            tbody +=  currtbody + `</tbody></table></div></td>`;                    
         }
+        else{
+            tbody += `<td></td>`;
+        }
+    
+        if (resobj[eachid].RetroDiff != ""){ //check if it is not an empty object 
+                retrobody += `<td class="displaytable" onclick="myfunc.displaytable(this)"><div style="display:none"><table><thead><tr><th>סמל</th><th>הפרש</th></tr></thead><tbody>`;
+ 
+                for (i=0;i<resobj[eachid].RetroDiff.Elem_heb.length;i++){ 
+                    retrobody += "<tr>";
+                    retrobody += `<td>${resobj[eachid].RetroDiff.Elem_heb[i]}</td>`;
+                    retrobody += `<td>${resobj[eachid].RetroDiff.Retrodiff[i]}</td>`;
+                    retrobody += "</tr>";
+                }
 
-        tbody += ((currtbody != "")?currtbody:"<td></td>") + ((retrobody != "")?retrobody:"<td></td>") + "</tr>"
-    }
-                
-    reptbody.innerHTML = tbody;
+            tbody += retrobody + `</tbody></table></div></td>`;
+        }
+        else{
+            tbody += `<td></td>`;
+        }
+        
+        tbody += `</tr>`
+    }    
+
+    document.getElementById("reptbody").innerHTML = tbody;
                 
     document.getElementById("repthead").children[0].children[2].click()
 
+}
+//*********************************************************************************** */
+myfunc.peremp = async function(empid){ //request can be insert or update
+    var fdata = new FormData();
+
+    fdata.append("request","perempcheck");
+    fdata.append("empid",empid);   
+   
+    const resobj = await myfunc.sendrequest(fdata)
+    if (resobj[0] == "Error"){
+        myfunc.msg(resobj[0], resobj[1])
+    }
+    else{
+        restab = "<table><thead><tr><th>סמל</th><th>שם</th><th>פנסיונר</th><th>נטו נוכחי</th><th>ברוטו נוכחי</th><th>ברוטו קודם</th><th>מסים נוכחי</th><th>ניכויים נוכחי</th><th>שנתי</th><th>רכב</th><th>פיצויים</th><th>לא מוסבר</th><th>סדר הופעה</th><th>הפרשים נוכחיים מהותיים</th><th>הפרשים רטרואקטיביים</th></tr></thead><tbody>"
+        myfunc.response("נתוני עובד בודד",restab)  
+        
+    }
 }

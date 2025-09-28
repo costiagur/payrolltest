@@ -33,7 +33,7 @@
         display:none
       }
 
-      #reptb th {width:5.5%}
+      #reptb th {width:4.1%}
 
       td.displaytable {
         background-color: rgba(10, 233, 10, 0.24);
@@ -71,18 +71,43 @@
     <div class="w3-cell" style="width:20%">  
       <div class="w3-row-padding w3-section w3-card-4">
         <div>
-            דוח חזותי, מפורט לפי תאריכי ערך, לשני חודשים
+            דוח חזותי, מפורט לפי תאריכי ערך, חודש קודם
         </div>
         <div>
-            <input type="file" id="hazuti" class="w3-input" placeholder="קובץ XLS">
+            <input type="file" id="prevhazuti" class="w3-input" placeholder="קובץ XLS">
         </div>  
       </div>
       <div class="w3-row-padding w3-section w3-card-4">
         <div>
-          שאילתת שעות עבודה, חודש שוטף
+            דוח חזותי ניסוי חישוב, מפורט לפי תאריכי ערך, חודש נוכחי
         </div>
         <div>
-            <input type="file" id="hoursquery" class="w3-input" placeholder="קובץ XLS">
+            <input type="file" id="currhazuti" class="w3-input" placeholder="קובץ XLS">
+        </div>  
+      </div>
+      <div class="w3-row-padding w3-section w3-card-4">
+        <div>
+          שאילתת שעות עבודה 1313, חודש שוטף
+        </div>
+        <div>
+            <input type="file" id="hoursquery1313" class="w3-input" placeholder="קובץ XLS">
+        </div>
+      </div>
+      <div class="w3-row-padding w3-section w3-card-4">
+        <div>
+          שאילתת שעות עבודה 1307, חודש שוטף
+        </div>
+        <div>
+            <input type="file" id="hoursquery1307" class="w3-input" placeholder="קובץ XLS">
+        </div>
+      </div>
+      <div class="w3-row-padding w3-section w3-card-4">
+        <div>
+          חזותי לפי תאריכי ערך ל-13 חודשים
+        </div>
+        <div>
+            <input type="file" id="hazuti13m" class="w3-input" placeholder="קובץ XLS">
+            <input type="number" id="expectedplus" class="w3-input" placeholder="שיעור גידול בסיס באחוזים">
         </div>
       </div>
       <div class="w3-row-padding w3-section w3-card-4">
@@ -91,9 +116,24 @@
               <td>טען והרץ בדיקות</td><td><input type="button" class="w3-btn w3-border w3-round" style="padding: 10px 24px;" value="הפעל" onclick="myfunc.upload()"></td>
             </tr>
             <tr>
+              <td>טען חזותי 13 חודשים</td><td><input type="button" class="w3-btn w3-border w3-round" style="padding: 10px 24px;" value="הפעל" onclick="myfunc.hazuti13m()"></td>
+            </tr>
+            <tr>
+              <td>עדכן קובץ בדיקות</td><td><input type="button" class="w3-btn w3-border w3-round" style="padding: 10px 25px;" value="עדכן&nbsp;" onclick="myfunc.upload(`addreplace`)"></td>
+            </tr>
+            <tr>
               <td>בחירה\הסרה בדיקות</td><td><input type="button" id="remchecks" class="w3-btn w3-border w3-round" style="padding: 10px 24px;" value="הסרה" onclick="myfunc.removechecks()" data-removecheck="0"></td>
             </tr>
           </table>
+      </div>
+      <div class="w3-row-padding w3-section w3-card-4">
+        <div>שאילתא מיוחדת</div>
+        <div>
+          <input type="text" placeholder="מספר סמל שכר" class="w3-input" id="semel">
+          <input type="text" placeholder="חריגים או גדול, קטן או שווה לערך כלשהו (שווה זה ==)" class="w3-input" id="reqtype">
+          <label for="pensionin">לכלול פנסיונרים</label>&nbsp;<input type="checkbox" class="w3-check" id="pensionin">
+          <button onclick="myfunc.adhoctest()" class="w3-btn">הרצה</button>
+        </div>
       </div>
       <!--<div class="w3-row-padding w3-section w3-card-4">
         <div>
@@ -150,7 +190,7 @@
         <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
           <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
             <input type="checkbox" id="hightax" value="hightax" class="w3-check" checked />
-            <label for="hightax">שיעור מס וביטוח לאומי מעל אחוז גבוה</label>   
+            <label for="hightax">שיעור מס וביטוח לאומי חורגים</label>   
           </header>
           <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
             <input type="text" id="hightax_level" value="">   
@@ -158,11 +198,11 @@
         </div>
         <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
           <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
-            <input type="checkbox" id="fundsprovision" value="fundsprovision" class="w3-check" checked />
-            <label for="fundsprovision">שיעורי הפרשת קופות חורגים ממוצע</label>  
+            <input type="checkbox" id="fundscount" value="fundscount" class="w3-check" checked />
+            <label for="fundscount">חריגות בהרכבי קופות</label>  
           </header>
           <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
-            <input type="text" id="fundsprovision_level" value="">  
+            <input type="text" id="fundscount_level" value="">  
           </div>
         </div>
         <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
@@ -181,6 +221,15 @@
           </header>
           <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
             <input type="text" id="nettnegative_level" value="" >
+          </div>  
+        </div>
+        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+            <input type="checkbox" id="rationonbase" value="rationonbase" class="w3-check" checked />
+            <label for="rationonbase">יחס פנימי חריג בין חלקי שכר</label>  
+          </header>
+          <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small nonvisible">
+            <input type="text" id="rationonbase_level" value="" >
           </div>  
         </div>
       </div>
@@ -213,7 +262,7 @@
           </header>
           <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
             <label for="semel_payhours_level">רף שעות</label>
-            <input type="text" id="semel_payhours_level" value="177" class="w3-input">
+            <input type="text" id="semel_payhours_level" value="173" class="w3-input">
           </div>
         </div>
       </div>
@@ -230,12 +279,12 @@
         </div>
         <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
           <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
-            <input type="checkbox" id="licinsveh" value="licinsveh" class="w3-check" checked />
-            <label for="licinsveh">סכומי ביטוח חובה ומקיף מעל מקסימום</label>
+            <input type="checkbox" id="vehicle_annual" value="vehicle_annual" class="w3-check" checked />
+            <label for="vehicle_annual">סכומי ביטוח חובה ומקיף מעל מקסימום</label>
           </header>
           <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
-            <label for="licinsveh_level">גבולות</label>
-            <input type="text" id="licinsveh_level" value="1779,1750,7000" class="w3-input" placeholder="רישיון, חובה, מקיף">        
+            <label for="vehicle_annual_level">גבולות</label>
+            <input type="text" id="vehicle_annual_level" value="1891,1750,7000" class="w3-input" placeholder="רישיון, חובה, מקיף">        
           </div>
         </div>
         <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
@@ -257,7 +306,7 @@
           </header>
           <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
             <label for="hoursWithoutYesod_level">מינימום שעות</label>
-            <input type="text" id="hoursWithoutYesod_level" value="8.5" class="w3-input">  
+            <input type="text" id="hoursWithoutYesod_level" value="8" class="w3-input">  
           </div>
         </div>
         <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
@@ -303,23 +352,17 @@
           <input type="text" id="semel_without_level" value="0.05" class="w3-input">
         </div>
       </div>
-    </div>
-      
-
-<!---
-      <div class="w3-row-padding w3-section">
-        <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
-          <header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
-            <input type="checkbox" id="semeltwice" value="semeltwice" class="w3-check" checked />
-            <label for="semeltwice">סמל שכר שמופיע יותר מפעם באותו תאריך ערך</label>  
-          </header>
-          <div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
-            <label for="semeltwice_level">מעל מספר מופעים</label>
-            <input type="text" id="semeltwice_level" value="1" class="w3-input">  
-          </div>
+      <div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+        <header class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <input type="checkbox" id="ratelow" value="ratelow" class="w3-check" checked />
+          <label for="ratelow">שעות עבודה עולים על חלקיות משרה</label>
+        </header>
+        <div class="w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">
+          <label for="ratelow_level">יחס בין שעות עבודה לתקן מחלקיות</label>
+          <input type="text" id="ratelow_level" value="1.2" class="w3-input">
         </div>
       </div>
--->
+    </div>
 
       
     </div>
@@ -333,6 +376,7 @@
         <tr>
           <th>מספר עובד</th>
           <th>שם עובד</th>
+          <th>גמלאי</th>
           <th onclick='myfunc.sort(this)'>נטו</th>
           <th onclick='myfunc.sort(this)'>ברוטו שוטף</th>
           <th onclick='myfunc.sort(this)'>ברוטו קודם</th>
@@ -340,17 +384,17 @@
           <th onclick='myfunc.sort(this)'>ניכויי זכות</th>
           <th onclick='myfunc.sort(this)'>תשלום שנתי</th>
           <th onclick='myfunc.sort(this)'>הפרש רכב</th>
+          <th onclick='myfunc.sort(this)'>גמר חשבון</th>
           <th onclick='myfunc.sort(this)'>הפרש לא מוסבר</th>
           <th style='width:16.6%'>הוראה</th>
           <th style='width:16.6%'>פרוט ברוטו שוטף</th>
           <th style='width:16.6%'>פרוט ברוטו רטרו</th>
         </tr>
       </thead>
-      <tbody id='reptbody'>
-
-      </tbody>
+      <tbody id='reptbody'></tbody>
     </table>
   </div>
+
   </body>
 
   <script src='uiclient.js'></script>

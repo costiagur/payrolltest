@@ -18,21 +18,23 @@ from semel_hourdeduct import semel_hourdeduct
 from semel6666 import semel6666
 from hightax import hightax
 from semelonce import semelonce
-from grosscur import grosscur
-from grossretro import grossretro
-from fundsprovision import fundsprovision
-from licinsveh import licinsveh
+from fundscount import fundscount
+from vehicle_annual import vehicle_annual
 from hoursWithoutYesod import hoursWithoutYesod
 from manyhours import manyhours
 from highgrossbtl import highgrossbtl
 from semeltwice import semeltwice
 from before9months import before9months
-from fundsreplace import fundsreplace
+#from fundsreplace import fundsreplace
 from NonreasonableNett import NonreasonableNett
 from semel_without import semel_without
 import custom
 from loaddf import loaddf
 from nettnegative import nettnegative
+from rationonbase import rationonbase
+from ratelow import ratelow
+from adhoctest import adhoctest
+from analysis13m import analysis13m
 
 CODESTR = "hazuticheck"
 
@@ -44,13 +46,10 @@ def myfunc(queryobj):
         request = postdict["request"]
         
         if request == "fileupload":
-            res = loaddf(filesdict)
+            res = loaddf(filesdict,postdict["reqfiletype"])
             replymsg = json.dumps(["uploadedrows",res]).encode('UTF-8')
-
-            custom.REFMONTH = custom.DF101["Refdate"].max()
-            custom.PREVMONTH = pd.to_datetime(custom.REFMONTH) + pd.DateOffset(months = -1)
-
-            custom.xlresfile = r'drafts\report_' + custom.REFMONTH.strftime("%Y-%m") + '_' + date.today().strftime('%Y%m%d') + ".xlsx"
+          
+            custom.xlresfile = BytesIO()
             wb = Workbook()
             wb.save(custom.xlresfile)
             
@@ -61,67 +60,53 @@ def myfunc(queryobj):
                         
             checkpool = {}
 
-            checkpool["semel_konenut"] = [semel_konenut,"מספר עובדים בחוזה אישי שקיבלו כוננות"]
-            checkpool["semel_payhours"] = [semel_payhours, "מספר עובדים שכמות שעות עבודה לפי שעות מעל חודש מלא"]
-            checkpool["semel_hourdeduct"] = [semel_hourdeduct, "מספר עובדים עם הפחתות שעות גדולות"]
-            checkpool["pubtrasport_nowork"] = [pubtrasport_nowork, "עובדים עם נסיעות ללא שכר"]
-            checkpool["semel6666"] = [semel6666, "מספר מקרים של אי שוויון בין סמל 6666 לסמל 6667"]
-            checkpool["semel_ratio"] = [semel_ratio, "מספר עובדים עם חלקיות מעל 100%"]
-            checkpool["BasisvsCalculated"] = [BasisvsCalculated,"מספר עובדים עם בסיס פנסיה לא סביר ביחס לערך שעה וחלקיות"]
-            checkpool["licinsveh"] = [licinsveh, "מקרים של ביטוח רכב בסכום חורג"]
-            checkpool["semelonce"] = [semelonce,"מספר מקרים של סמל שמופיע פעם אחת"]
-            #checkpool["grosscur"] = [grosscur,"מספר עובדים עם הפרשי ברוטו גדולים"]
-            checkpool["hightax"] = [hightax,"מספר עובדים עם שיעור מס וביטוח לאומי חריגים"]
-            #checkpool["grossretro"] = [grossretro,"מספר מקרים של הפרשי רטרו גבוהים"]
-            checkpool["fundsprovision"] = [fundsprovision,"מספר עובדים עם קופות חריגות"]
-            checkpool["hoursWithoutYesod"] = [hoursWithoutYesod,"מספר עובדים שיש נוכחות אך אין שכר יסוד"]
-            checkpool["manyhours"] = [manyhours,"מספר עובדים עם כמות שעות גבוהה מדי"]
-            checkpool["highgrossbtl"] = [highgrossbtl,"מספר עובדים עם ברוטו ביטוח לאומי מעל לתקרה"]
-            #checkpool["semeltwice"] = [semeltwice,"סמל שמופיע מספר פעמים באותו תאריך ערך - {}"]
-            checkpool["before9months"] = [before9months,"מספר עובדים עם ממשק שלילי להפרשות או ניכויים בדיעבד מעל 9 חודשים"]
-            checkpool["totalrep"] = [totalrep,"דוח השוואה כולל"]
-            checkpool["NonreasonableNett"] = [NonreasonableNett,"סכומי נטו לא סבירים ביחס רוחבי"]
-            checkpool["semel_without"] = [semel_without,"עובדים ללא סמל שיש לשאר עובדים בדירוג"]
-            checkpool["nettnegative"] = [nettnegative,"עובדים עם נטו שלילי"]
+            checkpool["semel_konenut"] = semel_konenut
+            checkpool["semel_payhours"] = semel_payhours
+            checkpool["semel_hourdeduct"] = semel_hourdeduct
+            checkpool["pubtrasport_nowork"] = pubtrasport_nowork
+            checkpool["semel6666"] = semel6666
+            checkpool["semel_ratio"] = semel_ratio
+            checkpool["BasisvsCalculated"] = BasisvsCalculated
+            checkpool["vehicle_annual"] = vehicle_annual
+            checkpool["semelonce"] = semelonce
+            checkpool["hightax"] = hightax
+            checkpool["fundscount"] = fundscount
+            checkpool["hoursWithoutYesod"] = hoursWithoutYesod
+            checkpool["manyhours"] = manyhours
+            checkpool["highgrossbtl"] = highgrossbtl
+            checkpool["before9months"] = before9months
+            checkpool["totalrep"] = totalrep
+            checkpool["NonreasonableNett"] = NonreasonableNett
+            checkpool["semel_without"] = semel_without
+            checkpool["nettnegative"] = nettnegative
+            checkpool["rationonbase"] = rationonbase
+            checkpool["ratelow"] = ratelow
 
-            if reqtest == "grosscur" or reqtest == "grossretro":
-                pass
-            else:
-                res = [reqtest,checkpool[reqtest][0](reqlevel),checkpool[reqtest][1]]
-            #
+            res = checkpool[reqtest](reqlevel)
+            replymsg = json.dumps([res[0],res[1],res[2]]).encode('UTF-8')
 
-            if res[0] == "totalrep": 
-                replymsg = json.dumps([res[0],res[1]]).encode('UTF-8')
-            #
-            else:
-                replymsg = json.dumps([res[0],res[1],res[2]]).encode('UTF-8')
-            #
 
-        elif request == "testfile":
+        elif request == "testfile": #request for the resulting XL file with all the tests
                         
-            with open(custom.xlresfile,"rb") as f:
-                file64enc = base64.b64encode(f.read())
-                file64dec = file64enc.decode()
-                replymsg = json.dumps(["testfile",f.name,file64dec]).encode('UTF-8')
-            #
-                
-            unlink(custom.xlresfile)
-
+            f = custom.xlresfile
+            f.seek(0)
+            file64enc = base64.b64encode(f.read())
+            file64dec = file64enc.decode()
+            replymsg = json.dumps(["testfile",r'report_' + date.today().strftime('%Y%m%d') + ".xlsx",file64dec]).encode('UTF-8') #f.name
         #
 
-        elif request == "fundscheck":   
+        elif request == "adhoctest":
+            adhocfile = adhoctest(postdict["semel"],postdict["reqtype"],postdict["pensionin"])
+            adhocfile.seek(0)
+            file64enc = base64.b64encode(adhocfile.read())
+            file64dec = file64enc.decode()
+            replymsg = json.dumps(["adhocfile",postdict["semel"] + ".xlsx",file64dec]).encode('UTF-8')
+        #
 
-            buff = BytesIO(filesdict['fundsfile'][1])
-
-            resfile = fundsreplace(buff)
-                        
-            with open(resfile,"rb") as f:
-                file64enc = base64.b64encode(f.read())
-                file64dec = file64enc.decode()
-                replymsg = json.dumps([f.name,file64dec]).encode('UTF-8')
-            #
-                
-            unlink(resfile)
+        elif request == "hazuti13m":   
+            file64enc = base64.b64encode(analysis13m(filesdict,postdict["expectedplus"]))
+            file64dec = file64enc.decode()
+            replymsg = json.dumps(["outliers.xlsx",file64dec]).encode('UTF-8')
         #
         
         return replymsg

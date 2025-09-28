@@ -1,12 +1,25 @@
 import custom
 import pandas as pd
 import numpy as np
+import inspect
+import sqlite3
 
 def semel_without(level="0.05"):
 
     level = 1-float(level)
 
-    middf = custom.DF101.loc[(custom.DF101["Division"]!= 90)&(custom.DF101["Refdate"]==custom.REFMONTH)&(custom.DF101["CurAmount"]!=0)&(custom.DF101["Elemtype"]=="addition components")&(~custom.DF101["Elem"].isin((custom.annualvehicle+custom.miluim+custom.meshulav))),["Rank","Dirug","Elem","Elem_heb","CurAmount","Empid","Empname"]]
+    conn = sqlite3.connect("dbsave.db")
+    cur = conn.cursor()
+
+    REFMONTH = cur.execute("SELECT MAX(Refdate) FROM dfcurr").fetchone()[0]
+
+    query = f"SELECT Empid,mn,Empname,Refdate,Elemtype,Amount,Elem,Elem_heb,Rank,Startdate FROM dfcurr WHERE Division <> 90 AND Refdate = '{REFMONTH}' AND Elemtype = 'addition components' OR Elem IN {str(tuple(custom.annualvehicle+custom.miluim+custom.meshulav))} AND Amount <> 0.0"
+
+    middf = pd.read_sql_query(query, conn)
+
+    conn.close()
+
+    #middf = custom.DFCURR.loc[(custom.DFCURR["Division"]!= 90)&(custom.DFCURR["Refdate"]==custom.REFMONTH)&(custom.DFCURR["Amount"]!=0)&(custom.DFCURR["Elemtype"]=="addition components")&(~custom.DFCURR["Elem"].isin((custom.annualvehicle+custom.miluim+custom.meshulav))),["Rank","Dirug","Elem","Elem_heb","Amount","Empid","Empname"]]
 
     groupdf = middf.groupby(by=["Rank","Elem","Elem_heb"],as_index=False,group_keys=True).count()
     groupempdf = middf.groupby(by="Rank",as_index=False,group_keys=True).nunique()
@@ -36,7 +49,7 @@ def semel_without(level="0.05"):
 
     resdf["EmpsWithout"] = resdf["EmpsNum"] - resdf["Empid"]
 
-    resdf.drop(["Dirug","CurAmount","Empid","required"],axis=1,inplace = True)
+    resdf.drop(["Amount","Empid","required"],axis=1,inplace = True)
 
     resdf.rename(columns={"Empid":"מספר עובד","Empname":"שם","Elem":"מספר סמל","Elem_heb":"סמל שכר","EmpsWithout":"עובדים ללא סמל","EmpsNum":"מספר עובדים"},inplace=True)
 
@@ -45,6 +58,6 @@ def semel_without(level="0.05"):
         resdf.to_excel(writer,sheet_name="ללא סמל",index=True)
     #   
 
-    return resdf.shape[0]
+    return [inspect.stack()[0][3],resdf.shape[0],"עובדים ללא סמל שיש לשאר עובדים בדירוג"]
 
 

@@ -6,7 +6,7 @@ import random
 import ctypes
 import common
 from platform import system
-
+9
 def main():
 
     common.intiate()

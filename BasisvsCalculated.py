@@ -1,10 +1,16 @@
 import custom
 import pandas as pd
 import numpy as np
+import inspect
+import sqlite3
+
 
 #בסיס פנסיה מחושב אינו סביר ביחס לבסיס פנסיה בתלוש. לדוגמה כאשר חלקיות אינה סבירה ביחס לבסיס הפנסיה
 
 def BasisvsCalculated(level="0.1"):
+
+    conn = sqlite3.connect("dbsave.db")
+    cur = conn.cursor()
 
     level = float(level)
 
@@ -12,24 +18,34 @@ def BasisvsCalculated(level="0.1"):
 
     semelsneeded = ((custom.semelratio,custom.pensionbasesemel,custom.hourdeduct,custom.takzivit)+custom.nottakzivitbase+custom.yesodandhours+custom.inbase)
 
-    middf = custom.DF101.loc[(custom.DF101["Refdate"] == custom.REFMONTH)&((custom.DF101["Elem"].isin(semelsneeded))|(custom.DF101["Elem_heb"] == custom.dayvalue))&(custom.DF101["Division"] != custom.pensiondepartment)&(custom.DF101["mn"] != "99")&(~custom.DF101["Rank"].isin(custom.hourwageranks)), \
-                     ["Empname","Empid","mn","Dirug","Division","Empid_mn","Elemtype","Elem_heb","Elem","CurAmount"]]
+    res = cur.execute("SELECT MAX(Refdate) FROM dfcurr")
+
+    REFMONTH = res.fetchone()[0]
+
+    query = f"SELECT Empid,mn,Empid_mn,Dirug,Empname,Elemtype,Elem_heb,Amount,Elem,Division FROM dfcurr WHERE Refdate = '{REFMONTH}' AND (Elem IN {str(tuple(semelsneeded))} OR Elem_heb = {chr(34) + custom.dayvalue + chr(34)}) AND Division <> {custom.pensiondepartment} AND mn <> 99 AND Rank NOT IN {str(tuple(custom.hourwageranks))}"
+
+    middf = pd.read_sql_query(query, conn)
+
+    conn.close()
+
+    #middf = custom.DFCURR.loc[(custom.DFCURR["Refdate"] == custom.REFMONTH)&((custom.DFCURR["Elem"].isin(semelsneeded))|(custom.DFCURR["Elem_heb"] == custom.dayvalue))&(custom.DFCURR["Division"] != custom.pensiondepartment)&(custom.DFCURR["mn"] != "99")&(~custom.DFCURR["Rank"].isin(custom.hourwageranks)), \
+    #                 ["Empname","Empid","mn","Dirug","Division","Empid_mn","Elemtype","Elem_heb","Elem","Amount"]]
     
     middf["Intakzivit"] = middf.apply(lambda row: 1 if row["Elem"] == custom.takzivit else 0,axis=1)
     
-    middf["Deductions"] = middf.apply(lambda row: row["CurAmount"] if row["Elem"] in ((custom.hourdeduct,custom.byhourpay)+custom.inbase) else 0,axis=1)
+    middf["Deductions"] = middf.apply(lambda row: row["Amount"] if row["Elem"] in ((custom.hourdeduct,custom.byhourpay)+custom.inbase) else 0,axis=1)
     
-    middf["Nottakzivitbase"] = middf.apply(lambda row: row["CurAmount"] if row["Elem"] in (custom.nottakzivitbase) else 0,axis=1)
+    middf["Nottakzivitbase"] = middf.apply(lambda row: row["Amount"] if row["Elem"] in (custom.nottakzivitbase) else 0,axis=1)
         
-    middf["actBasis"] = middf.apply(lambda row: row["CurAmount"] if row["Elem"] == custom.pensionbasesemel else 0,axis=1)
+    middf["actBasis"] = middf.apply(lambda row: row["Amount"] if row["Elem"] == custom.pensionbasesemel else 0,axis=1)
     
-    middf["Wagerate"] = middf.apply(lambda row: row["CurAmount"] if row["Elem"] == custom.semelratio else 0,axis=1)
+    middf["Wagerate"] = middf.apply(lambda row: row["Amount"] if row["Elem"] == custom.semelratio else 0,axis=1)
         
     def calcBasis(row):
         res = 0
         
         #if row["Elem_heb"] == custom.dayvalue:            
-        res = row["CurAmount"] * 22 * middf.loc[(middf["Elem"] == custom.semelratio)&(middf["Empid_mn"] == row["Empid_mn"]),"CurAmount"].sum()
+        res = row["Amount"] * 22 * middf.loc[(middf["Elem"] == custom.semelratio)&(middf["Empid_mn"] == row["Empid_mn"]),"Amount"].sum()
         #else:
         #    res = 0
         #
@@ -44,12 +60,12 @@ def BasisvsCalculated(level="0.1"):
     
     findf = groupdf.loc[(groupdf["Ratio"] <1-level) |(groupdf["Ratio"] > 1+level)&(np.round(groupdf["Ratio"],3) != round(25/22,3))].copy()
 
-    findf.rename(columns={"Empname":"שם","Empid":"מספר עובד","mn":"מנ","Dirug":"דירוג","Division":"אגף","CurAmount":"סכום","actBasis":"בסיס פנסיה בפועל","Wagerate":"חלקיות משרה","calcBasis":"בסיס מחושב"},inplace=True)
+    findf.rename(columns={"Empname":"שם","Empid":"מספר עובד","mn":"מנ","Dirug":"דירוג","Division":"אגף","Amount":"סכום","actBasis":"בסיס פנסיה בפועל","Wagerate":"חלקיות משרה","calcBasis":"בסיס מחושב"},inplace=True)
 
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
         findf[["מספר עובד","שם","מנ","דירוג","אגף","בסיס פנסיה בפועל","חלקיות משרה","בסיס מחושב"]].to_excel(writer,sheet_name="בסיס פנסיה",index=False)
     #      
     
 
-    return len(findf)
+    return [inspect.stack()[0][3],len(findf),"מספר עובדים עם בסיס פנסיה לא סביר ביחס לערך שעה וחלקיות"]
 #

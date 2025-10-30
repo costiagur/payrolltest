@@ -24,8 +24,8 @@ def vehicle_annual(level="1779,1750,7000"):
 
     conn.close()
 
-    custom.REFMONTH = curdf["Refdate"].max()
-    custom.PREVMONTH = prevdf["Refdate"].max()
+    #custom.REFMONTH = curdf["Refdate"].max()
+    #custom.PREVMONTH = prevdf["Refdate"].max()
 
     middf = pd.merge(curdf,prevdf,how="outer",on=["Empid","Empname","Elem","Elem_heb","Refdate"])    
     middf["PrevAmount"] = middf["PrevAmount"].fillna(0) #filling NaN with 0 so that calculations will be correct

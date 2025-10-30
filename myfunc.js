@@ -252,6 +252,7 @@ myfunc.upload = async function(reqfiletype="new"){
     fdata.append("currhazuti",document.getElementById("currhazuti").files[0]);
     fdata.append("hoursquery1313",document.getElementById("hoursquery1313").files[0]);
     fdata.append("hoursquery1307",document.getElementById("hoursquery1307").files[0]);
+    fdata.append("timesheetfile",document.getElementById("timesheetfile").files[0]);
 
     fdata.append("reqfiletype",reqfiletype);
     
@@ -267,7 +268,9 @@ myfunc.upload = async function(reqfiletype="new"){
        if (resobj[0] == "uploadedrows"){
            myfunc.response("מספר רשימות שהועלו", resobj[1])
            document.getElementById("loader").style.display='none'; //close loader
-           myfunc.submit()
+           if (document.getElementById("currhazuti").files[0] != undefined){
+                myfunc.submit()
+            }
        }
     }
 }
@@ -328,10 +331,10 @@ myfunc.resulttable = function(resobj){ //request can be insert or update
 
     for (eachid in resobj){
 
-        console.log(resobj[eachid].Empname)
+        //console.log(resobj[eachid].Empname)
 
         tbody += "<tr>";
-        tbody += `<td>${eachid}</td>`;
+        tbody += `<td onclick="myfunc.onecompare(${eachid})">${eachid}</td>`;
         tbody += `<td>${resobj[eachid].Empname}</td>`;
         tbody += `<td>${resobj[eachid].Pensioneer}</td>`;       
         tbody += `<td>${Number(resobj[eachid].NetCur).toFixed(0)}</td>`;
@@ -389,19 +392,139 @@ myfunc.resulttable = function(resobj){ //request can be insert or update
 
 }
 //*********************************************************************************** */
-myfunc.peremp = async function(empid){ //request can be insert or update
+myfunc.onecompare = async function(empid){ //request can be insert or update
     var fdata = new FormData();
 
-    fdata.append("request","perempcheck");
+    fdata.append("request","onecompare");
     fdata.append("empid",empid);   
    
+    document.getElementById("loader").style.display='block'; //display loader
+
+
     const resobj = await myfunc.sendrequest(fdata)
     if (resobj[0] == "Error"){
+        document.getElementById("loader").style.display='none'; //close loader
+        myfunc.msg(resobj[0], resobj[1])
+
+    }
+    else{
+        
+        thead = "<thead><tr>";
+        thead += "<th>אגף</th>";
+        thead += "<th>מנ</th>";
+        thead += "<th>סוג</th>";
+        thead += "<th>סמל</th>";
+        thead += "<th>תקופה</th>";
+        thead += "<th>סכום נוכחי</th>";
+        thead += "<th>סכום קודם</th>";
+        thead += "<th>הפרש</th>";
+        thead += "</tr></thead>";
+
+        tbody = "<tbody>";
+
+        console.log(resobj)
+
+        for (eachelem in resobj[1]){
+
+            tbody += "<tr>";
+            tbody += `<td>${resobj[1][eachelem].Division}</td>`;
+            tbody += `<td>${resobj[1][eachelem].mn}</td>`;       
+            tbody += `<td>${resobj[1][eachelem].Elemtype_heb}</td>`;
+            tbody += `<td>${resobj[1][eachelem].Elem_heb}</td>`;
+            tbody += `<td>${resobj[1][eachelem].Period}</td>`;
+            tbody += `<td>${resobj[1][eachelem].CurAmount.toFixed(0)}</td>`;
+            tbody += `<td>${resobj[1][eachelem].PrevAmount.toFixed(0)}</td>`;
+            tbody += `<td>${resobj[1][eachelem].Diff.toFixed(0)}</td>`;
+            tbody += `</tr>`
+        }
+        
+        tbody += "</tbody>"
+
+        restab = `<table id="onepersontab" class="w3-table w3-bordered w3-striped w3-border w3-hoverable">${thead}${tbody}</table>`
+        document.getElementById("loader").style.display='none'; //close loader
+
+        myfunc.msg(`נתוני עובד ${empid}`,restab)  
+        
+    }
+}
+
+//********************************************************************************************* */
+myfunc.makellm = async function(reqtype){
+    var fdata = new FormData();
+
+    fdata.append("request","llmquery");
+    fdata.append("reqtype",reqtype);
+    fdata.append("myrequest",(reqtype=='timesheet')?document.getElementById("timesheetrequest").value:document.getElementById("hazutirequest").value);
+   
+    document.getElementById("loader").style.display='block'; //display loader
+
+    const resobj = await myfunc.sendrequest(fdata)
+    if (resobj[0] == "Error"){
+        document.getElementById("loader").style.display='none'; //close loader
         myfunc.msg(resobj[0], resobj[1])
     }
     else{
-        restab = "<table><thead><tr><th>סמל</th><th>שם</th><th>פנסיונר</th><th>נטו נוכחי</th><th>ברוטו נוכחי</th><th>ברוטו קודם</th><th>מסים נוכחי</th><th>ניכויים נוכחי</th><th>שנתי</th><th>רכב</th><th>פיצויים</th><th>לא מוסבר</th><th>סדר הופעה</th><th>הפרשים נוכחיים מהותיים</th><th>הפרשים רטרואקטיביים</th></tr></thead><tbody>"
-        myfunc.response("נתוני עובד בודד",restab)  
+        document.getElementById("loader").style.display='none'; //close loader
+        if (resobj[0] == "timesheet"){
+            document.getElementById("timesheetsql").value = resobj[1];
+        }
+        else if (resobj[0] == "hazutirequest"){
+            document.getElementById("hazutisql").value = resobj[1];
+        }
+    }
+}
+//********************************************************************************************* */
+myfunc.runsql = async function(reqtype,how){ //request can be insert or update
+    var fdata = new FormData();
+
+    fdata.append("request","sqlquery");
+    fdata.append("reqtype",reqtype);   
+    fdata.append("myrequest",(reqtype=='timesheet')?document.getElementById("timesheetsql").value:document.getElementById("hazutisql").value);
+    fdata.append("how",how);
+
+    document.getElementById("loader").style.display='block'; //display loader
+
+    document.getElementById("timesheetresult").innerHTML = ''
+
+
+    const resobj = await myfunc.sendrequest(fdata)
+    if (resobj[0] == "Error"){
+        document.getElementById("loader").style.display='none'; //close loader
+        myfunc.msg(resobj[0], resobj[1])
+
+    }
+    else{
+        document.getElementById("loader").style.display='none'; //close loader
+
+        if (how == 'show'){
+
+            table = '<table class="w3-table-all w3-card-4 w3-bordered"><thead><tr>';
+
+            //console.log(resobj[0])
+
+            for (eachkey of Object.keys(resobj[1][0])){
+                table += `<th>${eachkey}</th>`
+            }
+
+            table += '</tr></thead><tbody>';
+            
+            for (var eachobj of Object.values(resobj[1])){
+                //console.log(eachobj)
+
+                table += "<tr>";
+                for (var val of Object.values(eachobj)){
+                    table += `<td>${val}</td>`;
+                }
+                table += "</tr>";
+            }
+            
+            table += "</tbody></table>"
+
+            document.getElementById("timesheetresult").innerHTML = table
+        }
+        else if(how == 'xls'){
+            myfunc.download(resobj[1][0], resobj[1][1])
+        }       
         
     }
 }

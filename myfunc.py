@@ -35,6 +35,9 @@ from rationonbase import rationonbase
 from ratelow import ratelow
 from adhoctest import adhoctest
 from analysis13m import analysis13m
+from onecompare import onecompare
+from llmquery import llmquery
+from sqlquery import sqlquery
 
 CODESTR = "hazuticheck"
 
@@ -54,6 +57,7 @@ def myfunc(queryobj):
             wb.save(custom.xlresfile)
             
         elif request == "salarycheck":
+            replymsg = b""
 
             reqtest = postdict["reqtest"]
             reqlevel = postdict["reqlevel"]
@@ -108,7 +112,28 @@ def myfunc(queryobj):
             file64dec = file64enc.decode()
             replymsg = json.dumps(["outliers.xlsx",file64dec]).encode('UTF-8')
         #
+
+        elif request == "onecompare":
+            resdf = onecompare(postdict["empid"])
+            replymsg = json.dumps(["oneperson",resdf]).encode('UTF-8')
+        #
+
+        elif request == "llmquery":
+            restxt = llmquery(postdict["myrequest"],postdict["reqtype"])
+            replymsg = json.dumps([postdict["reqtype"],restxt]).encode('UTF-8')
+        #
         
+        elif request == "sqlquery":
+            if postdict["how"] == 'show':
+                resjson = sqlquery(postdict["myrequest"],'show')
+                replymsg = json.dumps(resjson).encode('UTF-8')
+            elif postdict["how"] == 'xls':
+                file64enc = base64.b64encode(sqlquery(postdict["myrequest"],'xls'))
+                file64dec = file64enc.decode()
+                replymsg = json.dumps(["Result",['timesheet_output.xlsx',file64dec]]).encode('UTF-8')
+            #
+        #
+
         return replymsg
  
             # reply message should be encoded to be sent back to browser ----------------------------------------------

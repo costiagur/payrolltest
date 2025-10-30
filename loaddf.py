@@ -3,15 +3,19 @@ import custom
 from io import BytesIO
 import os
 import sqlite3
+import re
 
 def loaddf(filesdict,reqfiletype="new"): 
+
+    hoursquery1313df = None
+    hoursquery1307df = None
+    currhazutidf = None
+    prevhazutidf = None
 
     tomessage = []
 
     if len(filesdict) > 0:
-
-        #unsortedDFHOURS = pd.DataFrame(columns=["Empid","Empname","mn","Refdate","WorkHours","Empid_mn","Elem"])
-        
+       
         dbcon = sqlite3.connect('dbsave.db')
         cur = dbcon.cursor()
         DFHOURS = None
@@ -35,8 +39,6 @@ def loaddf(filesdict,reqfiletype="new"):
             cols = cols + [2,3]
                 
             midDF = pd.read_csv(buff,sep='\t',header=3,encoding="cp1255",na_filter=True,skip_blank_lines=True,skiprows=[5],usecols=cols,dtype={14:str},parse_dates=['תאריך ערך','ת.ת. עבודה',"הפסקה מ","הפסקה עד"],dayfirst=True)
-
-            #print(midDF.columns) 
 
             midDF.rename(columns={"שם עובד":"Empname","מספר עובד":"Empid","מ.נ.":"mn","אגף":"Division","סכום":"Amount","כמות":"Quantity","תאריך ערך":"Refdate","ת.ת. עבודה":"Startdate","סוג רכיב":"Elemtype_heb","שם רכיב":"Elem_heb","דרוג":"Dirug","דרגה":"darga","וותק":"vetek","הפסקה מ":"Stopfrom","הפסקה עד":"Stoptill","סמל הפסקה":"Stopcode","שם הפסקה":"Stopname"},inplace=True)
 
@@ -64,6 +66,56 @@ def loaddf(filesdict,reqfiletype="new"):
 
             return (midDF, tomessage)
         #
+        
+        def timesheetfile(buff,filename):
+            df = pd.read_csv(buff,sep='\t',header=2,encoding="cp1255",na_filter=False,skip_blank_lines=True,parse_dates=['תאריך נוכחות'],dayfirst=True)
+
+            for eachtitle in df.columns:
+                midval = re.sub(r'[^a-zA-Zא-ת\d\s]',"",eachtitle)
+                midval = midval.strip()
+                midval = re.sub(r'\s+','_',midval)
+                df.rename(columns={eachtitle:midval},inplace=True)
+            #
+
+            df.drop(columns=['משרד','מונה_קיזוז1'],inplace=True)
+
+            if len(df.columns[df.columns.str.contains('Unnamed')]) > 0:
+                df.drop(columns=df.columns[df.columns.str.contains('Unnamed')],inplace=True)
+            #
+
+            empty_name_cols = [col for col in df.columns if col == '' or col is None]
+
+            if len(empty_name_cols) > 0:
+                df.drop(columns=empty_name_cols,inplace=True)
+            #
+
+            print(df.columns)
+
+
+            #df['weekday'] = df['יום'].map({"א":"1","ב":"2","ג":"3","ד":"4","ה":"5","ו":"6","ש":"7"})
+            #df["empdate"] = df["מספר_עובד"].astype(str)+"-"+df["תאריך_נוכחות"].astype(str)
+            df["תאריך_נוכחות"] = df["תאריך_נוכחות"].dt.date
+
+            def strtutimenum(strdata):
+                if strdata == "":
+                    return 0
+                elif type(strdata) == str:
+                    if re.search(r'\d',strdata) and re.search(r':',strdata):
+                        return float(strdata.split(':')[0])+round(float(strdata.split(':')[1])/60,2)
+                    else:
+                        return strdata
+                else:
+                    return strdata 
+            #
+
+            df.iloc[:,8:48] = df.iloc[:,8:48].map(strtutimenum,na_action='ignore')
+
+            df.loc[df["פעילות"] == ".................","פעילות"] = "עבודה"
+
+            msg = df.to_sql("timesheet",dbcon,if_exists='replace',chunksize=500,method='multi')
+
+            return f"מספר רשומות נוכחות הינו {str(msg)}"
+
 
         for eachfile in dict(sorted(filesdict.items(),reverse=True)):             
             if eachfile == "hoursquery1313":
@@ -82,6 +134,10 @@ def loaddf(filesdict,reqfiletype="new"):
                 buff = BytesIO(filesdict['prevhazuti'][1])
                 prevhazutidf, msg = hazutfiles(buff,eachfile)
                 tomessage.append(msg)
+            elif eachfile == "timesheetfile":
+                buff = BytesIO(filesdict['timesheetfile'][1])
+                msg = timesheetfile(buff,eachfile)
+                tomessage.append(msg)
             #
 
         #
@@ -89,36 +145,32 @@ def loaddf(filesdict,reqfiletype="new"):
         if reqfiletype == "new":
             
             # Hours - concat, remove duplicates, insert in DB or picle
-            
-            unsortedDFHOURS = pd.concat([hoursquery1313df,hoursquery1307df],ignore_index=True)
-            sorteddf = unsortedDFHOURS.sort_values(by='WorkHours', ascending=False)              
-            DFHOURS = sorteddf.drop_duplicates(subset='Empid_mn', keep='first',ignore_index=True)
-            DFHOURS.set_index('Ind', inplace=True)
-            #custom.DFHOURS = DFHOURS
-            #pd.to_pickle(custom.DFHOURS,r'drafts\dfhours.pkl')
-            DFHOURS.to_sql("dfhours",dbcon,if_exists='replace',index=True,method='multi')
+            if hoursquery1313df and hoursquery1307df:
+                unsortedDFHOURS = pd.concat([hoursquery1313df,hoursquery1307df],ignore_index=True)
+                sorteddf = unsortedDFHOURS.sort_values(by='WorkHours', ascending=False)              
+                DFHOURS = sorteddf.drop_duplicates(subset='Empid_mn', keep='first',ignore_index=True)
+                DFHOURS.set_index('Ind', inplace=True)
+                DFHOURS.to_sql("dfhours",dbcon,if_exists='replace',index=True,method='multi')
 
             # Currhazuti - merge with hours, insert in DB or pickle
-            
-            DFCURR = pd.merge(currhazutidf,DFHOURS['WorkHours'],how="left",on="Ind")
-            DFCURR.set_index('Ind', inplace=True)
-            #custom.DFCURR = DFCURR
-            #custom.REFMONTH = DFCURR["Refdate"].max()
-            #pd.to_pickle(custom.DFCURR, r'drafts\dfcurr.pkl')
-            
-            print(DFCURR.columns)
-            
-            DFCURR.to_sql("dfcurr",dbcon,if_exists='replace',index=True, chunksize=500)
+
+            if currhazutidf:
+                if DFHOURS is None:
+                    DFHOURS = pd.read_sql("SELECT * FROM dfhours",dbcon)
+                    DFHOURS.set_index('Ind', inplace=True)
+                #
+                DFCURR = pd.merge(currhazutidf,DFHOURS['WorkHours'],how="left",on="Ind")
+                DFCURR.set_index('Ind', inplace=True)
+                DFCURR.to_sql("dfcurr",dbcon,if_exists='replace',index=True, chunksize=500)
             
             # Prevhazuti - insert in DB or pickle
             
-            prevhazutidf.set_index('Ind', inplace=True)
-            #custom.DFPREV = prevhazutidf
-            #custom.PREVMONTH = custom.DFPREV["Refdate"].max()
-            #pd.to_pickle(custom.DFPREV, r'drafts\dfprev.pkl')
-            prevhazutidf.to_sql("dfprev",dbcon,if_exists='replace',index=True,chunksize=500)
+            if prevhazutidf:
+                prevhazutidf.set_index('Ind', inplace=True)
+                prevhazutidf.to_sql("dfprev",dbcon,if_exists='replace',index=True,chunksize=500)
     
-            print("data loaded as new")
+            else:
+                pass #in case only timesheet was loaded
 
         elif reqfiletype == "addreplace":
             if eachfile == "currhazuti":
@@ -133,41 +185,27 @@ def loaddf(filesdict,reqfiletype="new"):
 
                 smalldf.to_sql("dfcurr",dbcon,if_exists='append',index=True)
 
-                #DFCURR.drop(existdf.loc[existdf["Empid"].isin(midDF101["Empid"].unique())].index,inplace=True)
-                #existdf = pd.concat([existdf,smalldf],ignore_index=True)
-                #existdf.sort_values(by=["Empid","mn","Elemtype","Elem","Refdate"],ascending=[True,True,True,True,False],axis=0,ignore_index=True,inplace=True)
-                #pd.to_pickle(existdf,r'drafts\dfcurr.pkl' if eachfile == "currhazuti" else r'drafts\dfprev.pkl')
-
                 print("data added/replaced in currhazuti")
                 #
             #
         #
 
-        if "currhazuti" not in filesdict:
-            #if "dfcurr.pkl" in9 os.listdir("drafts"):
-            #    custom.DFCURR = pd.read_pickle('drafts/dfcurr.pkl')
-            #    custom.REFMONTH = custom.DFCURR["Refdate"].max()
-            if cur.execute("""SELECT tableName FROM sqlite_master WHERE type='table' AND tableName='dfcurr'; """).fetchall():
+        if "currhazuti" not in filesdict: #test if there is currhazuti data to work with
+            if cur.execute("""SELECT tbl_name FROM sqlite_schema WHERE type='table' AND tbl_name='dfcurr'; """).fetchall():
                 pass
             else:
                 tomessage.append("לא קיימות רשומות חודש שוטף במערכת ")
             #
         #
-        if "prevhazuti" not in filesdict:
-            #if "dfprev.pkl" in os.listdir("drafts"):
-            #    custom.DFPREV = pd.read_pickle('drafts/dfprev.pkl')
-            #    custom.PREVMONTH = custom.DFPREV["Refdate"].max()
-            if cur.execute("""SELECT tableName FROM sqlite_master WHERE type='table' AND tableName='dfprev'; """).fetchall():
+        if "prevhazuti" not in filesdict: #test if there is prevhazuti data to work with
+            if cur.execute("""SELECT tbl_name FROM sqlite_schema WHERE type='table' AND tbl_name='dfprev'; """).fetchall():
                 pass
             else:
                 tomessage.append("לא קיימות רשומות חודש קודם במערכת ")
             #
         #
-        if "hoursquery1313" not in filesdict and "hoursquery1307" not in filesdict:
-            #if "dfhours.pkl" in os.listdir("drafts"):
-            #    custom.DFHOURS = pd.read_pickle('drafts/dfhours.pkl')
-            #
-            if cur.execute("""SELECT tableName FROM sqlite_master WHERE type='table' AND tableName='dfhours'; """).fetchall():
+        if "hoursquery1313" not in filesdict and "hoursquery1307" not in filesdict: #test if there is hours data to work with
+            if cur.execute("""SELECT tbl_name FROM sqlite_schema WHERE type='table' AND tbl_name='dfhours'; """).fetchall():
                 pass
             else:
                 tomessage.append("לא קיימות רשומות שעות עבודה במערכת ")
@@ -175,17 +213,7 @@ def loaddf(filesdict,reqfiletype="new"):
         #
     
         dbcon.close()
-    #
-    #else:
-    #    custom.DFCURR = pd.read_pickle('drafts/dfcurr.pkl')
-    #    custom.DFPREV = pd.read_pickle('drafts/dfprev.pkl')
-    #    custom.DFHOURS = pd.read_pickle('drafts/dfhours.pkl')
-    #    custom.REFMONTH = custom.DFCURR["Refdate"].max()
-    #    custom.PREVMONTH = custom.DFPREV["Refdate"].max()
-    #
 
-   
-    #print(r'\n'.join(tomessage))
     return '; '.join(tomessage)
 
 #

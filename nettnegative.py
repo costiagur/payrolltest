@@ -23,7 +23,7 @@ def nettnegative(level=""):
     #middf = custom.DFCURR.loc[custom.DFCURR["Elem"]==custom.nettnegative]
     #middf.drop(columns=["Refdate","Division","שם אגף","Dirug","darga","Startdate","Elemtype_heb","Elem_heb","Elem","Rank","Empid_mn","Elemtype","WorkHours","vetek","Quantity","Stopcode"],inplace=True)
     
-    with pd.ExcelWriter(custom.xlresfile, mode="a",if_sheet_exists='replace') as writer:
+    with pd.ExcelWriter(custom.xlresfile, mode="a",if_sheet_exists='new') as writer:
         middf.loc[:,["Empid","Empname","mn","Amount","Stop"]].to_excel(writer,sheet_name="נטו שלילי",float_format="%.2f",header=["מספר עובד","שם עובד","מנ","סכום","הפסקה"],index=False)
     #
  

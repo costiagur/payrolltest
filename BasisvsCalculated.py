@@ -60,10 +60,10 @@ def BasisvsCalculated(level="0.1"):
     
     findf = groupdf.loc[(groupdf["Ratio"] <1-level) |(groupdf["Ratio"] > 1+level)&(np.round(groupdf["Ratio"],3) != round(25/22,3))].copy()
 
-    findf.rename(columns={"Empname":"שם","Empid":"מספר עובד","mn":"מנ","Dirug":"דירוג","Division":"אגף","Amount":"סכום","actBasis":"בסיס פנסיה בפועל","Wagerate":"חלקיות משרה","calcBasis":"בסיס מחושב"},inplace=True)
+    #findf.rename(columns={"Empname":"שם","Empid":"מספר עובד","mn":"מנ","Dirug":"דירוג","Division":"אגף","Amount":"סכום","actBasis":"בסיס פנסיה בפועל","Wagerate":"חלקיות משרה","calcBasis":"בסיס מחושב"},inplace=True)
 
-    with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
-        findf[["מספר עובד","שם","מנ","דירוג","אגף","בסיס פנסיה בפועל","חלקיות משרה","בסיס מחושב"]].to_excel(writer,sheet_name="בסיס פנסיה",index=False)
+    with pd.ExcelWriter(custom.xlresfile, mode="a",if_sheet_exists='replace') as writer:
+        findf[["Empid","Empname","mn","Dirug","Division","actBasis","Wagerate","calcBasis"]].to_excel(writer,sheet_name="בסיס פנסיה",float_format="%.2f",header=["מספר עובד","שם","מנ","דירוג","אגף","בסיס פנסיה בפועל","חלקיות משרה","בסיס מחושב"],index=False)
     #      
     
 

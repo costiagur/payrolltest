@@ -3,11 +3,22 @@ import numpy as np
 import custom
 import inspect
 import sqlite3
+import re
 
 def fundscount(level=""):
 
     conn = sqlite3.connect("dbsave.db")
     cur = conn.cursor()
+
+    def regexp(pattern, text): #REGEXP doesn't exist natively in SQLite, so we create it
+        res = re.findall(pattern, text)
+        if res:
+            return True
+        else:
+            return False
+    #
+
+    conn.create_function("regexp", 2, regexp) #registering the function in the connection
 
     REFMONTH = cur.execute("SELECT MAX(Refdate) FROM dfcurr").fetchone()[0]
 
@@ -19,7 +30,7 @@ def fundscount(level=""):
 
     #middf = custom.DFCURR.loc[(custom.DFCURR["Division"] != 90)&(custom.DFCURR["Refdate"]==custom.REFMONTH)&(custom.DFCURR["Elemtype"].isin(("provision components","voluntary deductions")))&(custom.DFCURR["Amount"]!=0.0),cols]
        
-    query2 = f"SELECT Empid,mn,Empname,Elem,Division,Amount,Startdate,Stopname,Stopfrom,Stoptill,Rank FROM dfcurr WHERE Division = 90 AND Amount > 0 AND Refdate = '{REFMONTH}' AND Elemtype = 'provision components'"
+    query2 = f"SELECT Empid,mn,Empname,Elem,Amount,Startdate,Stopname,Stopfrom,Stoptill,Rank FROM dfcurr WHERE Division = 90 AND Amount > 0 AND Refdate = '{REFMONTH}' AND Elemtype = 'provision components' " + "AND Elem REGEXP '3[0-9]{5}'"
 
     gimladf = pd.read_sql_query(query2, conn)
 
@@ -48,7 +59,7 @@ def fundscount(level=""):
         elif row["Elem"] == '30501':
             resarr[0] = impow()
         #    
-        print(resarr)
+        #print(resarr)
         return resarr
     #
 
@@ -58,9 +69,10 @@ def fundscount(level=""):
     gimladf[["type3","type4","type5","type6","type7","type8"]] = gimladf.apply(fundnum,axis=1,result_type='expand')
 
     groupdf = middf.groupby(by=["Empid","Empname","Startdate","Rank"],as_index=False,group_keys=True).sum(["type3","type4","type5","type6","type7","type8"])
-    gimlagroupdf = gimladf.groupby(by=["Empid","Empname","Startdate","Rank","Division"],as_index=False,group_keys=True).sum(["type3","type4","type5","type6","type7","type8"])
+    gimlagroupdf = gimladf.groupby(by=["Empid","mn","Empname","Startdate","Rank"],as_index=False,group_keys=True).sum(["type3","type4","type5","type6","type7","type8"])
 
     groupdf["Msg"] = ""
+    gimladf["Msg"] = "גמלאי"
 
     groupdf.drop(columns="mn",inplace=True)
 
@@ -95,26 +107,12 @@ def fundscount(level=""):
     gimlagroupdf["Stop"] = gimlagroupdf.apply(lambda row: stopdf.loc[stopdf["Empid"] == row["Empid"],"Stop"].tolist(),axis=1)
     gimlagroupdf["Stop"] = gimlagroupdf["Stop"].apply(lambda x: ', '.join(x) if isinstance(x, list) else x)
 
-    namedict= {"Empid":"מספר עובד",
-    "Empname":"שם",
-    "Startdate":"תחילת_העסקה",
-    "Rank":"דרוג",
-    "type3":"קופת בסיס",
-    "type4":"קופת ענ",
-    "type5":"קופת הה",
-    "type6":"קהש",
-    "type7":"עצמאי",
-    "type8":"אישית לפיצויים",
-    "Stop":"בהפסקת עבודה"}
-
-    groupdf.rename(columns=namedict,inplace=True)
-    gimlagroupdf.rename(columns=namedict,inplace=True)
+    findf = pd.concat([groupdf.loc[groupdf["Msg"]!=''],gimlagroupdf],ignore_index=True)
 
     with pd.ExcelWriter(custom.xlresfile, mode="a") as writer:
-        groupdf.loc[groupdf["Msg"]!=''].to_excel(writer,sheet_name="קופות חריגות",index=False)
-        gimlagroupdf
+        findf[["Empid","Empname","Startdate","Rank","Amount","type3","type4","type5","type6","type7","type8","Msg","Stop"]].to_excel(writer,sheet_name="קופות חריגות",header=["מספר עובד","שם","תחילת_העסקה","דרוג","סכום","קופת בסיס","קופת ענ","קופת הה","קהש","עצמאי","אישית לפיצויים","הודעה","בהפסקת עבודה"],index=False)
     #  
 
     conn.close()
 
-    return [inspect.stack()[0][3],len(groupdf.loc[groupdf["Msg"]!='']),"מספר קופות חריגות"]
+    return [inspect.stack()[0][3],findf.shape[0],"מספר קופות חריגות"]

@@ -51,6 +51,7 @@
   <div class="w3-bar w3-border w3-light-grey">
     <a href="#" class="w3-bar-item w3-button w3-text-teal"  onclick="myfunc.switchtabs('salary')" id="barsalary">בקרות שכר</a>
     <a href="#" class="w3-bar-item w3-button" onclick="myfunc.switchtabs('report')" id="barreport">דוח ריכוז נתונים</a>
+    <a href="#" class="w3-bar-item w3-button" onclick="myfunc.switchtabs('timesheetpage')" id="timesheet">דוח נוכחות</a>
   </div>
   <dialog id="msg_dg">
     <div style="text-align:left"><button onclick="msg_dg.close();msg_txt.innerHTML = '';msg_title.innerHTML =''" class="w3-button w3-border w3-round">X</button></div>
@@ -129,23 +130,22 @@
       <div class="w3-row-padding w3-section w3-card-4">
         <div>שאילתא מיוחדת</div>
         <div>
-          <input type="text" placeholder="מספר סמל שכר" class="w3-input" id="semel">
-          <input type="text" placeholder="חריגים או גדול, קטן או שווה לערך כלשהו (שווה זה ==)" class="w3-input" id="reqtype">
-          <label for="pensionin">לכלול פנסיונרים</label>&nbsp;<input type="checkbox" class="w3-check" id="pensionin">
-          <button onclick="myfunc.adhoctest()" class="w3-btn">הרצה</button>
+          <textarea placeholder="enter search request" class="w3-input" id="adhocrequest"></textarea>
+          <select class="w3-input" id="adhocbase">
+            <option value="curr" selected>נתוני חודש שוטף</option>
+            <option value="prev">נתוני חודש קודם</option>
+            <option value="hours">נתוני שעות עבודה</option>
+          </select>
+          <input type="text" id="adhoccols" class="w3-input" placeholder="עמודות לתוצאה, מופרדות בפסיקים">
+          <input type="text" id="adhocwhere" class="w3-input" placeholder="תנאי סינון">
+          <table>
+            <tr>
+              <td><button onclick="myfunc.adhocllm()" class="w3-btn">צור</button></td>
+              <td><button onclick="myfunc.adhoctest()" class="w3-btn">הפעל</button></td>
+            </tr>
+          </table>
         </div>
       </div>
-      <!--<div class="w3-row-padding w3-section w3-card-4">
-        <div>
-            דוח מסלקה 2016
-        </div>
-        <div>
-          <input type="file" id="fundsfile" class="w3-input" placeholder="קובץ CSV">
-        </div>  
-        <div>
-          <input type="button" class="w3-button w3-border w3-round" value="הרצה" onclick="myfunc.submitfunds()">
-        </div>
-      </div>-->
     </div>
           
     <div class="w3-cell" style="width:80%">
@@ -363,8 +363,7 @@
         </div>
       </div>
     </div>
-
-      
+     
     </div>
   </div>
   
@@ -393,6 +392,29 @@
       </thead>
       <tbody id='reptbody'></tbody>
     </table>
+  </div>
+
+  <div id="timesheetpage" class="switcher nondisplayed">
+    <h2>שאילתות דוח נוכחות</h2>
+
+    <div class="w3-cell" style="width:20%">  
+      <div class="w3-row-padding w3-section w3-card-4">
+        <span>דוח נוכחות</span><span><input type="file" id="timesheetfile" class="w3-input" placeholder="קובץ XLS"></span>  
+      </div>
+      <div class="w3-row-padding w3-section w3-card-4">
+        <textarea placeholder="enter search request" class="w3-input" id="timesheetrequest"></textarea>
+        <textarea placeholder = "sql SELECT query" class ="w3-input" id="timesheetsql"></textarea>
+      </div>
+      <div class="w3-row-padding w3-section w3-card-4">
+        <button class="w3-btn w3-border w3-round" style="padding: 10px 24px;" onclick="myfunc.upload()">טען</button>
+        <button class="w3-btn w3-border w3-round" style="padding: 10px 24px;" onclick="myfunc.makellm('timesheet')">צור שאילתא</button>
+        <button class="w3-btn w3-border w3-round" style="padding: 10px 24px;" onclick="myfunc.runsql('timesheet','show')">הפעל שאילתא</button>
+        <button class="w3-btn w3-border w3-round" style="padding: 10px 24px;" onclick="myfunc.runsql('timesheet','xls')">ייצא אקסל</button>
+      </div>
+    </div>
+    <div class="w3-cell" style="width:80%">
+      <div id="timesheetresult"></div>
+    </div>
   </div>
 
   </body>

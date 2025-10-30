@@ -45,5 +45,5 @@ def hoursWithoutYesod(level=""):
         resdf.to_excel(writer,sheet_name="שעות ללא יסוד",index=False)
     #    
     
-    return [inspect.stack()[0][3],len(resdf["מספר עובד"]),"מספר עובדים שיש נוכחות אך אין שכר יסוד"]
+    return [inspect.stack()[0][3],resdf.shape[0],"מספר עובדים שיש נוכחות אך אין שכר יסוד"]
 

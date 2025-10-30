@@ -4,24 +4,38 @@ import pandas as pd
 import numpy as np
 import custom
 import statsmodels.formula.api as smf
+import inspect
+import sqlite3
 
 def fundsprovision(level=""):   
 
     pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
-    cols = ["Empid","Empname","mn","Startdate","Refdate","Elemtype","Elem","Elem_heb","Rank","CurAmount"]
+    #cols = ["Empid","Empname","mn","Startdate","Refdate","Elemtype","Elem","Elem_heb","Rank","Amount"]
+
+    conn = sqlite3.connect("dbsave.db")
+    cur = conn.cursor()
+
+    custom.REFMONTH = cur.execute("SELECT MAX(Refdate) FROM dfcurr").fetchone()[0]
+
+    query = f"SELECT Empid,mn,Empname,Refdate,Elemtype,Amount,Elem,Elem_heb,Rank,Startdate FROM dfcurr WHERE Division <> 90 AND Refdate = '{custom.REFMONTH}' AND ((Elemtype IN ('addition components','provision components') OR Elem = '{custom.takzivit}') AND (Elem NOT IN ({str(tuple(custom.nonpension))}) ) AND Amount <> 0.0)"
+
+    middf = pd.read_sql_query(query, conn)
+
+    conn.close()
+
     prevyear = pd.to_datetime(custom.REFMONTH) + pd.DateOffset(months = -12)
 
-    middf = custom.DF101.loc[(custom.DF101["Division"] != 90)&(custom.DF101["Refdate"]==custom.REFMONTH)&((custom.DF101["Elemtype"].isin(("addition components","provision components"))|(custom.DF101["Elem"]==custom.takzivit))&(~custom.DF101["Elem"].isin(custom.nonpension))&(custom.DF101["CurAmount"]!=0.0)),cols]
+    #middf = custom.DFCURR.loc[(custom.DFCURR["Division"] != 90)&(custom.DFCURR["Refdate"]==custom.REFMONTH)&((custom.DFCURR["Elemtype"].isin(("addition components","provision components"))|(custom.DFCURR["Elem"]==custom.takzivit))&(~custom.DFCURR["Elem"].isin(custom.nonpension))&(custom.DFCURR["Amount"]!=0.0)),cols]
 
     def apply1(row):
         reslist = []
         reslist.append(1 if row["Startdate"] > prevyear and row["Rank"] in custom.edufund_fromsecondyear else 0) #in case of non eligible for edu fund during first year
         reslist.append(1 if row["Elem"]=="30501" else 0)
-        reslist.append(row["CurAmount"] if row["Elemtype"] == "provision components" else 0)
-        reslist.append(row["CurAmount"] if row["Elemtype"] == "addition components" else 0)
+        reslist.append(row["Amount"] if row["Elemtype"] == "provision components" else 0)
+        reslist.append(row["Amount"] if row["Elemtype"] == "addition components" else 0)
         reslist.append(1 if row["Rank"] in custom.hozeishi else 0)
-        reslist.append(row["CurAmount"] if row["Elemtype"] == "addition components" and row["Elem"] in (custom.annualelement+ custom.annualvehicle)  else 0)
+        reslist.append(row["Amount"] if row["Elemtype"] == "addition components" and row["Elem"] in (custom.annualelement+ custom.annualvehicle)  else 0)
    
         return reslist
     #
@@ -56,7 +70,7 @@ def fundsprovision(level=""):
 
     leng = abs(bins[1] - bins[0])
 
-    groupdf["Hist"] = hists[np.floor((groupdf["Residual"] - bins[0])/leng).astype(int)]
+    groupdf["Hist"] = groupdf.apply(lambda row: hists[min(np.floor((row["Residual"] - bins[0])/leng).astype(int),99)],axis=1)
 
     resdf = groupdf.loc[groupdf["Hist"] <= 10,["Empid","Empname","Addition","Provision","Provisionrate","Yhat","Yhatrate"]]
 
@@ -66,5 +80,5 @@ def fundsprovision(level=""):
         resdf.to_excel(writer,sheet_name="שיעור הפרשה לקופות",index=False)
     #  
 
-    return len(resdf["מספר עובד"].unique())
+    return [inspect.stack()[0][3],len(resdf["מספר עובד"].unique()),"מספר עובדים עם קופות חריגות"]
 #

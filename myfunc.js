@@ -250,9 +250,8 @@ myfunc.upload = async function(reqfiletype="new"){
 
     fdata.append("prevhazuti",document.getElementById("prevhazuti").files[0]);
     fdata.append("currhazuti",document.getElementById("currhazuti").files[0]);
-    fdata.append("hoursquery1313",document.getElementById("hoursquery1313").files[0]);
-    fdata.append("hoursquery1307",document.getElementById("hoursquery1307").files[0]);
-    fdata.append("timesheetfile",document.getElementById("timesheetfile").files[0]);
+    fdata.append("timeschedulefile",document.getElementById("timeschedulefile").files[0]);
+    fdata.append("jobs",document.getElementById("jobs").files[0]);
 
     fdata.append("reqfiletype",reqfiletype);
     
@@ -268,9 +267,7 @@ myfunc.upload = async function(reqfiletype="new"){
        if (resobj[0] == "uploadedrows"){
            myfunc.response("מספר רשימות שהועלו", resobj[1])
            document.getElementById("loader").style.display='none'; //close loader
-           if (document.getElementById("currhazuti").files[0] != undefined){
-                myfunc.submit()
-            }
+           myfunc.submit()
        }
     }
 }
@@ -336,6 +333,7 @@ myfunc.resulttable = function(resobj){ //request can be insert or update
         tbody += "<tr>";
         tbody += `<td onclick="myfunc.onecompare(${eachid})">${eachid}</td>`;
         tbody += `<td>${resobj[eachid].Empname}</td>`;
+        tbody += `<td>${resobj[eachid].jobname}</td>`;
         tbody += `<td>${resobj[eachid].Pensioneer}</td>`;       
         tbody += `<td>${Number(resobj[eachid].NetCur).toFixed(0)}</td>`;
         tbody += `<td>${resobj[eachid].GrossCur.toFixed(0)}</td>`;
@@ -454,7 +452,7 @@ myfunc.makellm = async function(reqtype){
 
     fdata.append("request","llmquery");
     fdata.append("reqtype",reqtype);
-    fdata.append("myrequest",(reqtype=='timesheet')?document.getElementById("timesheetrequest").value:document.getElementById("hazutirequest").value);
+    fdata.append("myrequest",(reqtype=='timeschedule')?document.getElementById("timeschedulerequest").value:document.getElementById("hazutirequest").value);
    
     document.getElementById("loader").style.display='block'; //display loader
 
@@ -465,10 +463,10 @@ myfunc.makellm = async function(reqtype){
     }
     else{
         document.getElementById("loader").style.display='none'; //close loader
-        if (resobj[0] == "timesheet"){
-            document.getElementById("timesheetsql").value = resobj[1];
+        if (resobj[0] == "timeschedule"){
+            document.getElementById("timeschedulesql").value = resobj[1];
         }
-        else if (resobj[0] == "hazutirequest"){
+        else if (resobj[0] == "hazuti"){
             document.getElementById("hazutisql").value = resobj[1];
         }
     }
@@ -478,18 +476,31 @@ myfunc.runsql = async function(reqtype,how){ //request can be insert or update
     var fdata = new FormData();
 
     fdata.append("request","sqlquery");
-    fdata.append("reqtype",reqtype);   
-    fdata.append("myrequest",(reqtype=='timesheet')?document.getElementById("timesheetsql").value:document.getElementById("hazutisql").value);
+    fdata.append("reqtype",reqtype);
+    
+    var timeschedule = "";
+    
+    if (document.getElementById("timeschedulesql").value != ""){
+        timeschedule = document.getElementById("timeschedulesql").value
+    }
+    else if (document.getElementById("timescheduleid").value != ""){
+        timeschedule = `SELECT * FROM timeschedule where timeschedule.מספר_עובד = ${document.getElementById("timescheduleid").value}`
+    }
+
+    fdata.append("myrequest",(reqtype=='timeschedule')?timeschedule:document.getElementById("hazutisql").value);
+    fdata.append("source",reqtype)
     fdata.append("how",how);
 
     document.getElementById("loader").style.display='block'; //display loader
 
-    document.getElementById("timesheetresult").innerHTML = ''
+    //document.getElementById("timescheduleresult").innerHTML = ''
+    //document.getElementById("hazutiqueryresult").innerHTML = ''
 
 
     const resobj = await myfunc.sendrequest(fdata)
     if (resobj[0] == "Error"){
         document.getElementById("loader").style.display='none'; //close loader
+        console.log(resobj)
         myfunc.msg(resobj[0], resobj[1])
 
     }
@@ -498,7 +509,7 @@ myfunc.runsql = async function(reqtype,how){ //request can be insert or update
 
         if (how == 'show'){
 
-            table = '<table class="w3-table-all w3-card-4 w3-bordered"><thead><tr>';
+            table = '<table class="sqltabels"><thead><tr>';
 
             //console.log(resobj[0])
 
@@ -520,11 +531,76 @@ myfunc.runsql = async function(reqtype,how){ //request can be insert or update
             
             table += "</tbody></table>"
 
-            document.getElementById("timesheetresult").innerHTML = table
+            if (reqtype == 'timeschedule'){
+                document.getElementById("timescheduleresult").innerHTML = table
+            }
+            else if (reqtype == 'hazuti'){
+                document.getElementById("hazutiqueryresult").innerHTML = table
+            }
         }
         else if(how == 'xls'){
             myfunc.download(resobj[1][0], resobj[1][1])
         }       
         
     }
+}
+//**************************************************************************************************************** */
+myfunc.addblocs = function(){
+    var rows = ""
+    var checkpool = {}
+    var rows = ""
+
+    checkpool["semel_cantbe"] = ["סמלים שלא יהיו לעובד","",""]
+    checkpool["semel6666"] = ["תשלום 6666 בסכום שונה מ-6667","",""]
+    checkpool["globalpay"] = ["תשלום יסוד ללא נוכחות","",""]
+    //checkpool["hightax"] = ["שיעור מס וביטוח לאומי חורגים","",""]
+    checkpool["fundscount"] = ["חריגות בהרכבי קופות","",""]
+    checkpool["nettnegative"] = ["נטו שלילי","",""]
+    checkpool["rationonbase"] = ["יחס פנימי חריג בין חלקי שכר","",""]
+    checkpool["shabat"] = ["עבודה בשבת","",""]
+    checkpool["morethan12"] = ["עבודה מעל 12 שעות","",""]
+    checkpool["workplan"] = ["סטיות בין עבודה לתכנית עבודה","",""]
+    checkpool["currpmt_to_left_emps"] = ["תשלום שכר יסוד שוטף למי שפרש","",""]
+    checkpool["newsymbols"] = ["סמלים חדשים החודש","",""]
+    checkpool["before9months"] = ["ממשק שלילי קופות רטרו מעל 9 חודשים","",""]
+    //checkpool["NonreasonableNett"] = ["נטו לא סביר ביחס רוחבי","",""]
+    checkpool["deductyesod"] = ["הפחתה רטרו בשכר יסוד","",""]
+    checkpool["longabscent"] = ["לא עבדו חודשיים","",""]
+    checkpool["paidabscence"] = ["העדרות בתשלום","",""]
+    checkpool["NettAboveGross"] = ["נטו גדול מברוטו","",""]
+    checkpool["pubtrasport_nowork"] = ["נסיעות ללא עבודה","",""]    
+    checkpool["pubtransport_leasing"] = ["נסיעות ליסינג","",""]    
+    checkpool["no_pubtransport"] = ["עובדים שעבדו ואין החזר תחבורה ציברות","",""]
+    checkpool["semel_payhours"] = ["תשלום לפי שעות עבודה בכמות חריגה","רף שעות","173"]
+    checkpool["semel_hourdeduct"] = ["ניכוי שעות בכמות חריגה","רף שעות","100"]
+    checkpool["semel_ratio"] = ["חלקיות העולה על 100%","רף רגישות","1.1"]
+    //checkpool["BasisvsCalculated"] = ["הפרשי בסיס הפנסיה החורגים מהפרשי חלקיות","טווח רגישות","0.1"]
+    checkpool["vehicle_annual"] = ["סכומי ביטוח חובה ומקיף מעל מקסימום","גבולות","2032,7000"]
+    checkpool["semelonce"] = ["סמלים המופעים רק פעם אחת","טווח רגישות","0.05"]
+    checkpool["hoursWithoutYesod"] = ["שעות נוכחות ללא שכר","מינימום שעות","8"]
+    checkpool["manyhours"] = ["ריבוי שעות","רף שעות","220"]
+    checkpool["highgrossbtl"] = ["ברוטו ביטוח לאומי מעל לתקרה","תקרת ביטוח לאומי","47465"]
+    checkpool["totalrep"] = ["דוח השוואה כולל","רף רגישות להפרשים","0.2,2000"]
+    checkpool["semel_without"] = ["סמלי שכר שחסרים לפי דירוג","אחוז עובדים ללא סמל","0.05"]
+    checkpool["ratelow"] = ["שעות עבודה עולים על חלקיות משרה","יחס בין שעות עבודה לתקן מחלקיות","1.2"]
+    checkpool["diff_time2pay"] = ["פער בין שעות נוכחות למועברות לשכר","מינימום שעות","10"]
+    checkpool["many_extrahours"] = ["ריבוי שעות נוספות","מינימום שעות","44"]
+    checkpool["nonauthhours"] = ["ש.נ. לא מאושרות","רמת שנ לא מאושרות","10"]
+    checkpool["vehnopresence"] = ["החזר רכב ללא נוכחות","מספר ימי נוכחות מזערי","3"]
+       
+    for (entrie of Object.entries(checkpool)){
+        console.log(entrie)
+        rows += `<div class="w3-quarter w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">`
+        rows += `<header class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small">`
+        rows += `<input type="checkbox" id="${entrie[0]}" value="${entrie[0]}" class="w3-check" checked />`
+        rows += `<label for="${entrie[0]}">${entrie[1][0]}</label>`  
+        rows += `</header>`
+        rows += `<div class = "w3-card-4 w3-pale-green w3-border w3-round marginright w3-padding-small ${(entrie[1][2] == "")?"nonvisible":""}">`
+        rows += `<label for="nonauthhours_level">${entrie[1][1]}</label>`
+        rows += `<input type="text" id="${entrie[0]}_level" value="${entrie[1][2]}" class="w3-input">`  
+        rows += `</div>`
+        rows += `</div>`
+    }
+
+    document.getElementById("blocks").innerHTML = rows
 }

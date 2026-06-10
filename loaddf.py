@@ -1,14 +1,11 @@
 import pandas as pd
-import custom
 from io import BytesIO
-import os
 import sqlite3
 import re
+import custom
 
 def loaddf(filesdict,reqfiletype="new"): 
 
-    hoursquery1313df = None
-    hoursquery1307df = None
     currhazutidf = None
     prevhazutidf = None
 
@@ -16,23 +13,8 @@ def loaddf(filesdict,reqfiletype="new"):
 
     if len(filesdict) > 0:
        
-        dbcon = sqlite3.connect('dbsave.db')
+        dbcon = sqlite3.connect(custom.dbsave)
         cur = dbcon.cursor()
-        DFHOURS = None
-        unsortedDFHOURS = None
-
-        def houfiles(buff,filename):
-            midDFHOURS = pd.read_csv(buff,sep='\t',header=0,encoding="cp1255",na_filter=True,skip_blank_lines=True,parse_dates=['תוקף עד','תוקף מ'],dayfirst=True,usecols=list(range(0,6,1)))
-            midDFHOURS.rename(columns={"מספר זהות ":"Empid","שם עובד":"Empname","מ.נ":"mn","תוקף מ":"Refdate","תוקף עד":"Enddate","כמות":"WorkHours"}, inplace=True)
-            midDFHOURS["Empid_mn"] = midDFHOURS[["Empid","mn"]].apply(lambda a: "{}_{}".format(a["Empid"],a["mn"]), axis=1)                            
-            midDFHOURS["Elem"] = custom.yesod
-            midDFHOURS.drop(columns="Enddate",inplace=True)
-            midDFHOURS["Ind"] = midDFHOURS.apply(lambda x: "{}_{}_{}".format(x["Empid_mn"], x["Elem"], x["Refdate"].strftime('%Y%m%d')), axis=1)
-            midDFHOURS["Refdate"] = midDFHOURS['Refdate'].dt.date
-            tomessage = f"רשומות {filename}: {str(midDFHOURS.shape[0])}"
-
-            return (midDFHOURS, tomessage)
-        #
 
         def hazutfiles(buff,filename):
             cols = list(range(5,23,1))
@@ -62,7 +44,7 @@ def loaddf(filesdict,reqfiletype="new"):
             midDF.sort_values(by=["Empid","mn","Elemtype","Elem","Refdate"],ascending=[True,True,True,True,False],axis=0,ignore_index=True,inplace=True)
             
             global tomessage
-            tomessage = f"רשומות חדשות {filename}: {str(midDF.shape[0])}"
+            tomessage = f"רשומות חדשות {'בחזותי חודש שוטף' if filename=='currhazuti' else 'בחזותי חודש קודם'}: {str(midDF.shape[0])}"
 
             return (midDF, tomessage)
         #
@@ -83,17 +65,16 @@ def loaddf(filesdict,reqfiletype="new"):
                 df.drop(columns=df.columns[df.columns.str.contains('Unnamed')],inplace=True)
             #
 
+            df.rename(columns={"מחלקה":"אגף","מחלקה1":"מחלקה"},inplace=True)
+
             empty_name_cols = [col for col in df.columns if col == '' or col is None]
 
             if len(empty_name_cols) > 0:
                 df.drop(columns=empty_name_cols,inplace=True)
             #
 
-            print(df.columns)
+            #print(df.columns)
 
-
-            #df['weekday'] = df['יום'].map({"א":"1","ב":"2","ג":"3","ד":"4","ה":"5","ו":"6","ש":"7"})
-            #df["empdate"] = df["מספר_עובד"].astype(str)+"-"+df["תאריך_נוכחות"].astype(str)
             df["תאריך_נוכחות"] = df["תאריך_נוכחות"].dt.date
 
             def strtutimenum(strdata):
@@ -107,88 +88,79 @@ def loaddf(filesdict,reqfiletype="new"):
                 else:
                     return strdata 
             #
-
-            df.iloc[:,8:48] = df.iloc[:,8:48].map(strtutimenum,na_action='ignore')
+            
+            df.iloc[:,8:df.shape[1]] = df.iloc[:,8:df.shape[1]].map(strtutimenum,na_action='ignore')
 
             df.loc[df["פעילות"] == ".................","פעילות"] = "עבודה"
 
             msg = df.to_sql("timesheet",dbcon,if_exists='replace',chunksize=500,method='multi')
 
             return f"מספר רשומות נוכחות הינו {str(msg)}"
+        #
 
+        def jobs(buff, filename):
+            midDF = pd.read_csv(buff,sep='\t',header=0,encoding="cp1255",na_filter=True,skip_blank_lines=True,parse_dates=['תוקף מ','תוקף עד'],dayfirst=True)
+            midDF.rename(columns={"שם עובד":"empname","מספר זהות ":"empid","מ.נ":"mn","תוקף מ":"datefrom","תוקף עד":"datetill","תפקיד":"jobnum","שם תפקיד":"jobname","תיאור תפקיד":"jobdescript"},inplace=True)
+            midDF["empid_mn"] = midDF[["empid","mn"]].apply(lambda a: "{}_{}".format(a["empid"],a["mn"]), axis=1)
+            msg = midDF.to_sql("jobs",dbcon,if_exists='replace',chunksize=500,method='multi')
+            query = """
+                WITH doublejobs AS ( 
+                SELECT *, COUNT(empid_mn), min(datefrom) as mindatefrom, empid_mn||'_'||REPLACE(datefrom,"00:00:00","") AS deleterow FROM jobs
+                GROUP BY empid_mn
+                HAVING COUNT(empid_mn) > 1 AND datefrom = min(datefrom)
+                )
+                DELETE FROM jobs
+                WHERE empid_mn||'_'||REPLACE(datefrom,"00:00:00","") IN (SELECT deleterow FROM doublejobs)
+                """
+            cur.execute(query) #מחיקת מקרים בהם לאותו עובד יש שני תפקידים. מוחקים את המוקדם מביניהם
+            dbcon.commit()
+            return f"מספר רשומות תפקידים הינו {str(msg)}"
+        #
 
         for eachfile in dict(sorted(filesdict.items(),reverse=True)):             
-            if eachfile == "hoursquery1313":
-                buff = BytesIO(filesdict['hoursquery1313'][1])
-                hoursquery1313df, msg = houfiles(buff,eachfile)
-                tomessage.append(msg)
-            elif eachfile == "hoursquery1307":
-                buff = BytesIO(filesdict['hoursquery1307'][1])
-                hoursquery1307df, msg = houfiles(buff,eachfile)
-                tomessage.append(msg)
-            elif eachfile == "currhazuti":
+            if eachfile == "currhazuti" and reqfiletype == "new":
                 buff = BytesIO(filesdict['currhazuti'][1])
                 currhazutidf, msg = hazutfiles(buff,eachfile)
                 tomessage.append(msg)
+                if isinstance(currhazutidf,pd.DataFrame):
+                    currhazutidf.set_index('Ind', inplace=True)
+                    currhazutidf.to_sql("dfcurr",dbcon,if_exists='replace',index=True, chunksize=500)
+            #
+
+            elif eachfile == "currhazuti" and reqfiletype == "addreplace":
+                buff = BytesIO(filesdict['currhazuti'][1])
+                smalldf, msg = hazutfiles(buff,eachfile)
+                tomessage.append(msg)
+                if isinstance(smalldf,pd.DataFrame):
+                    delexist = "DELETE FROM dfcurr WHERE Empid_mn IN " + str(tuple(smalldf["Empid_in"].unique()))
+                    cur.execute(delexist)
+                    dbcon.commit()
+                    smalldf.to_sql("dfcurr",dbcon,if_exists='append',index=True,chunksize=500)
+                    print("data added/replaced in currhazuti")
+            #
+
             elif eachfile == "prevhazuti":
                 buff = BytesIO(filesdict['prevhazuti'][1])
                 prevhazutidf, msg = hazutfiles(buff,eachfile)
                 tomessage.append(msg)
-            elif eachfile == "timesheetfile":
-                buff = BytesIO(filesdict['timesheetfile'][1])
+                if isinstance(prevhazutidf,pd.DataFrame):
+                    prevhazutidf.set_index('Ind', inplace=True)
+                    prevhazutidf.to_sql("dfprev",dbcon,if_exists='replace',index=True,chunksize=500)
+            #
+
+            elif eachfile == "timeschedulefile":
+                buff = BytesIO(filesdict['timeschedulefile'][1])
                 msg = timesheetfile(buff,eachfile)
                 tomessage.append(msg)
             #
-
-        #
-            #
-        if reqfiletype == "new":
             
-            # Hours - concat, remove duplicates, insert in DB or picle
-            if hoursquery1313df and hoursquery1307df:
-                unsortedDFHOURS = pd.concat([hoursquery1313df,hoursquery1307df],ignore_index=True)
-                sorteddf = unsortedDFHOURS.sort_values(by='WorkHours', ascending=False)              
-                DFHOURS = sorteddf.drop_duplicates(subset='Empid_mn', keep='first',ignore_index=True)
-                DFHOURS.set_index('Ind', inplace=True)
-                DFHOURS.to_sql("dfhours",dbcon,if_exists='replace',index=True,method='multi')
-
-            # Currhazuti - merge with hours, insert in DB or pickle
-
-            if currhazutidf:
-                if DFHOURS is None:
-                    DFHOURS = pd.read_sql("SELECT * FROM dfhours",dbcon)
-                    DFHOURS.set_index('Ind', inplace=True)
-                #
-                DFCURR = pd.merge(currhazutidf,DFHOURS['WorkHours'],how="left",on="Ind")
-                DFCURR.set_index('Ind', inplace=True)
-                DFCURR.to_sql("dfcurr",dbcon,if_exists='replace',index=True, chunksize=500)
-            
-            # Prevhazuti - insert in DB or pickle
-            
-            if prevhazutidf:
-                prevhazutidf.set_index('Ind', inplace=True)
-                prevhazutidf.to_sql("dfprev",dbcon,if_exists='replace',index=True,chunksize=500)
-    
-            else:
-                pass #in case only timesheet was loaded
-
-        elif reqfiletype == "addreplace":
-            if eachfile == "currhazuti":
-                smalldf = pd.merge(currhazutidf,DFHOURS,how="left",on="Ind")
-
-                delexist = "DELETE FROM dfcurr WHERE Empid_mn IN " + str(tuple(smalldf["Empid_in"].unique()))
-                
-                DFCURR = pd.read_sql("SELECT * FROM dfcurr",dbcon)
-
-                cur.execute(delexist)
-                dbcon.commit()
-
-                smalldf.to_sql("dfcurr",dbcon,if_exists='append',index=True)
-
-                print("data added/replaced in currhazuti")
-                #
+            elif eachfile == "jobs":
+                buff = BytesIO(filesdict['jobs'][1])
+                msg = jobs(buff,eachfile)
+                tomessage.append(msg)
             #
         #
+
 
         if "currhazuti" not in filesdict: #test if there is currhazuti data to work with
             if cur.execute("""SELECT tbl_name FROM sqlite_schema WHERE type='table' AND tbl_name='dfcurr'; """).fetchall():
@@ -204,14 +176,32 @@ def loaddf(filesdict,reqfiletype="new"):
                 tomessage.append("לא קיימות רשומות חודש קודם במערכת ")
             #
         #
-        if "hoursquery1313" not in filesdict and "hoursquery1307" not in filesdict: #test if there is hours data to work with
-            if cur.execute("""SELECT tbl_name FROM sqlite_schema WHERE type='table' AND tbl_name='dfhours'; """).fetchall():
+
+        if "timeschedulefile" not in filesdict: #test if there is hours data to work with
+            if cur.execute("""SELECT tbl_name FROM sqlite_schema WHERE type='table' AND tbl_name='timesheet'; """).fetchall():
                 pass
             else:
                 tomessage.append("לא קיימות רשומות שעות עבודה במערכת ")
+
             #
         #
-    
+
+        if "jobs" not in filesdict: #test if there is hours data to work with
+            if cur.execute("""SELECT tbl_name FROM sqlite_schema WHERE type='table' AND tbl_name='jobs'; """).fetchall():
+                pass
+            else:
+                tomessage.append("לא קיימות רשומות תפקידים במערכת ")
+
+            #
+        #
+
+        timesheetmonth = cur.execute("""SELECT DATE((SELECT MAX(timesheet.תאריך_נוכחות) from timesheet),'start of month')""").fetchone()[0]                               
+        currdfmonth = cur.execute("SELECT MAX(Refdate) FROM dfcurr").fetchone()[0]
+
+        if currdfmonth != timesheetmonth:
+            tomessage.append(f"אזהרה: קיימות רשומות שעות עבודה מתאריך {timesheetmonth} בעוד שהרשומות בתלוש שייכות לתאריך {currdfmonth} ")
+        #
+
         dbcon.close()
 
     return '; '.join(tomessage)

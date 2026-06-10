@@ -3,7 +3,7 @@ import re
 
 def llmquery(myrequest,reqtype='timesheet'):
     client = Client(
-    host='http://10.80.23.181:11434',
+    host='hostip:11434',
     #headers={'x-some-header': 'some-value'}
     )
 
